@@ -1,0 +1,428 @@
+---
+title: "writeup"
+author: 'Yuting Mei'
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    number_sections: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require('dplyr')
+require('magrittr')
+```
+
+
+# Introduction
+
+---
+
+The following text will introduce how to use R language to simulate the average earnings obtained by gamblers using martingale strategy when playing roulette.
+
+# Background
+
+---
+
+A martingale is a class of betting strategies that originated from and were popular in 18th-century France. The simplest of these strategies was designed for a game in which the gambler wins the stake if a coin comes up heads and loses if it comes up tails. The strategy had the gambler double the bet after every loss, so that the first win would recover all previous losses plus win a profit equal to the original stake.
+
+## Martingale Strategy
+
+---
+
+A roulette table composed of 38 (or 37) evenly sized pockets on a wheel. The pockets are colored red, black, or green. The pockets are also numbered. Roulette is a game of chance in which a pocket is randomly selected. Gamblers may wager on several aspects of the outcome. For example, one may place a wager that the randomly selected pocket will be red or odd numbered or will be a specific number.
+
+For this assignment, all one needs to know is that there are 38 pockets of which 2 are green, 18 are red, and 18 are black. The payout for a bet on black (or red) is $1 for each $1 wagered. This means that if a gambler bets $1 on black and the randomly selected pocket is black, then the gambler will get the original $1 wager and an additional $1 as winnings.
+
+# Methods
+
+---
+
+## Assumptions
+
+---
+
+* Gamblers will not leave the game halfway through before completing each round
+* In each simulation, all grids on the roulette wheel have the same probability of being selected (1/38)
+* Gamblers make the same decisions(bet on red) in each round of gambling and will not be affected by the results of the previous round
+
+## limitations
+
+---
+
+* In real life, each grid of the turntable is unlikely to be transferred every time.
+* Computer simulations are approximate values, which still cannot represent a more accurate probability, so there will be deviations when measuring uncertainty.
+* Although according to the law of large numbers, the larger the number of samples, the higher the probability that the arithmetic mean will be close to the expected value. Perhaps increasing the number of simulations can get a more stable probability.
+
+## parameters
+
+---
+
+Parameter  | Description  
+------------- | ------------- 
+B  | Starting Budget  
+W  | Winnings threshold for stopping  
+L  | Time threshold for stopping
+M  | Casino’s maximum wager
+
+## Stopping rules
+
+---
+
+A player will use the above strategy and play until:
+* the player has W dollars
+* the player goes bankrupt
+* the player completes L wagers (or plays)
+
+---
+
+## Simulation
+
+---
+
+We first use code to implement the logic of playing roulette once. According to the rules of the game, if the color transferred on the roulette is the same as the bet by the gambler, the gambler will get the same income as the bet amount, otherwise the gambler will pay twice the deposit of the previous round in the next round.
+
+Next, we will simulate the gambler's budget of 200, the wager of 100, and the upper limit of winnings of 300 to simulate the profitability of the gambler's participation in 1000 rounds of games.
+
+First, we use one_play to simulate gambling once. The wager of the gambler depends on the wager of the previous round. If the previous round is won, the wager is 1, otherwise it is twice the wager of the previous round. We assume that the gambler chooses red, then there will be two events of going to red (success) and going to other colors (failure). Since the event we are currently simulating is a gamble that turns to red, this is a binomial distribution with observation as 1, trial as 1, and probability of success on each trial as 18/38.
+
+When we complete a simulation, we need to update our state, and we need to increase the number of times we play before the next round starts. In addition, we also need to update our wager and budget, depending on the result of this simulation, if we win (turn to red), then the gambler's budget needs to add the winning wager. If we lose (to another color), then the gambler's budget needs to subtract the wager.
+
+When the gambler's budget is less than 0, the gambler's number of gambling exceeds 1,000, or the gambler's income exceeds the threshold, one round of simulation will automatically stop.
+
+Above we have completed a simulation round of the turntable, repeating the above steps 1000 times to complete 1000 simulations.
+
+```{r}
+#' A single play of the Martingale strategy
+#'
+#' Takes a state list, spins the roulette wheel, returns the state list with updated values (for example, budget, plays, etc)
+#' @param state A list with the following entries: 
+#'   B              number, the budget
+#'   W              number, the budget threshold for successfully stoping
+#'   L              number, the maximum number of plays 
+#'   M              number, the casino wager limit
+#'   plays          integer, the number of plays executed
+#'   previous_wager number, the wager in the previous play (0 at first play)
+#'   previous_win   TRUE/FALSE, indicator if the previous play was a win (TRUE at first play)
+#' @return The updated state list
+one_play <- function(state){
+  
+    # Wager
+    proposed_wager <- ifelse(state$previous_win, 1, 2*state$previous_wager)
+    wager <- min(proposed_wager, state$M, state$B)
+    
+    # Spin of the wheel
+    red <- rbinom(1,1,18/38)
+    
+    # Update state
+    state$plays <- state$plays + 1
+    state$previous_wager <- wager
+    if(red){
+      # WIN
+      state$B <- state$B + wager
+      state$previous_win <- TRUE
+    }else{
+      # LOSE
+      state$B <- state$B - wager
+      state$previous_win <- FALSE
+    }
+  state
+}
+
+
+#' Stopping rule
+#'
+#' Takes the state list and determines if the gambler has to stop
+#' @param state A list.  See one_play
+#' @return TRUE/FALSE
+stop_play <- function(state){
+  if(state$B <= 0) return(TRUE)
+  if(state$plays >= state$L) return(TRUE)
+  if(state$B >= state$W) return(TRUE)
+  FALSE
+}
+
+
+#' Play roulette to either bankruptcy, success, or play limits
+#'
+#' @param B number, the starting budget
+#' @param W number, the budget threshold for successfully stoping
+#' @param L number, the maximum number of plays 
+#' @param M number, the casino wager limit
+#' @return A vector of budget values calculated after each play.
+one_series <- function(
+    B
+  , W
+  , L
+  , M
+){
+
+  # initial state
+  state <- list(
+    B = B
+  , W = W
+  , L = L
+  , M = M
+  , plays = 0
+  , previous_wager = 0
+  , previous_win = TRUE
+  )
+  
+  # vector to store budget over series of plays
+  budget <- rep(NA, L)
+  
+  # For loop of plays
+  for(i in 1:L){
+    new_state <- state %>% one_play
+    budget[i] <- new_state$B
+    if(new_state %>% stop_play){
+      return(budget[1:i])
+    }
+    state <- new_state
+  }
+  budget    
+}
+
+# helper function
+get_last <- function(x) x[length(x)] 
+
+
+# Simulation
+walk_out_money <- rep(NA, 10000)
+for(j in seq_along(walk_out_money)){
+  walk_out_money[j] <- one_series(B = 200, W = 300, L = 1000, M = 100) %>% get_last
+}
+```
+
+# Results
+
+---
+
+
+```{r}
+# Walk out money distribution
+hist(walk_out_money, breaks = 100)
+
+```
+The above picture simulates a scenario where the Budget is 200, the winning threshold is 300, the wager is 100, and 1000 simulations. The x-axis of the graph represents the final profit of the gambler in the 1000 simulations, and the y-axis represents the number of times (frequency) the gambler obtains the corresponding profit in the 1000 simulations.
+
+
+The following are the probability of a gambler using more than 200 budgets in roulette and the average income of the gambler under 1000 simulations.
+```{r}
+# Estimated probability of walking out with extra cash
+mean(walk_out_money > 200)
+
+# Estimated earnings
+mean(walk_out_money - 200)
+```
+Although as long as the gambler switches to red once, no matter how many times he switches to other colors before, he will get a final profit of one dollar (the same amount as his original wager). But in fact, after 1000 simulations, it is found that the gambler still has about 0.5 of probability that he will earn more than $200 at the end and the gambler loses about $46 at average. It seems that this strategy can not make gamblers win money.
+
+But we only simulated the situation where the gambler had a budget of 200, a wager of 100, and an upper limit of 300. This inference does not seem to be too convincing. 
+
+## Change parameters of simulation
+
+* B = 200, W = 500, L = 1000, M = 300
+
+Next, I will test the above conclusions by controlling variables to change some of the parameters.
+```{r}
+walk_out_money <- rep(NA, 10000)
+for(j in seq_along(walk_out_money)){
+  walk_out_money[j] <- one_series(B = 200, W = 500, L = 1000, M = 300) %>% get_last
+}
+
+# Walk out money distribution
+hist(walk_out_money, breaks = 100)
+
+# Estimated probability of walking out with extra cash
+mean(walk_out_money > 200)
+
+# Estimated earnings
+mean(walk_out_money - 200)
+```
+ 
+ * B = 200, W = 700, L = 1000, M = 500
+ 
+```{r}
+walk_out_money <- rep(NA, 10000)
+for(j in seq_along(walk_out_money)){
+  walk_out_money[j] <- one_series(B = 200, W = 700, L = 1000, M = 500) %>% get_last
+}
+
+# Walk out money distribution
+hist(walk_out_money, breaks = 100)
+
+# Estimated probability of walking out with extra cash
+mean(walk_out_money > 200)
+
+# Estimated earnings
+mean(walk_out_money - 200)
+```
+ Obviously, when we keep other parameters unchanged, besides increasing the wager, the probability that the gambler can win more than the budget after 1000 simulations has dropped a lot, and the average loss of money has also increased.
+ 
+ * B = 200, W = 250, L = 1000, M = 50
+ 
+```{r}
+walk_out_money <- rep(NA, 10000)
+for(j in seq_along(walk_out_money)){
+  walk_out_money[j] <- one_series(B = 200, W = 250, L = 1000, M = 50) %>% get_last
+}
+
+# Walk out money distribution
+hist(walk_out_money, breaks = 100)
+
+# Estimated probability of walking out with extra cash
+mean(walk_out_money > 200)
+
+# Estimated earnings
+mean(walk_out_money - 200)
+```
+ Similarly, reducing the wager can reduce the average loss of the gambler and increase the probability that the gambler will win over the budget.
+ 
+ * B = 400, W = 500, L = 1000, M = 100
+ 
+```{r}
+walk_out_money <- rep(NA, 10000)
+for(j in seq_along(walk_out_money)){
+  walk_out_money[j] <- one_series(B = 400, W = 500, L = 1000, M = 100) %>% get_last
+}
+
+# Walk out money distribution
+hist(walk_out_money, breaks = 100)
+
+# Estimated probability of walking out with extra cash
+mean(walk_out_money > 400)
+
+# Estimated earnings
+mean(walk_out_money - 400)
+```
+Increasing the budget can increase the probability that the gambler will earn more than the budgeted amount. But the average profit of the gambler has dropped compared to the case of a small budget.
+
+* B = 200, W = 250, L = 1000, M = 100
+
+```{r}
+walk_out_money <- rep(NA, 10000)
+for(j in seq_along(walk_out_money)){
+  walk_out_money[j] <- one_series(B = 200, W = 250, L = 1000, M = 100) %>% get_last
+}
+
+# Walk out money distribution
+hist(walk_out_money, breaks = 100)
+
+# Estimated probability of walking out with extra cash
+mean(walk_out_money > 200)
+
+# Estimated earnings
+mean(walk_out_money - 200)
+```
+The figure above shows the situation when the winning threshold for stop is reduced.
+
+## estimate the average number of plays
+
+```{r}
+one_play <- function(state){
+  
+    # Wager
+    proposed_wager <- ifelse(state$previous_win, 1, 2*state$previous_wager)
+    wager <- min(proposed_wager, state$M, state$B)
+    
+    # Spin of the wheel
+    red <- rbinom(1,1,18/38)
+    
+    # Update state
+    state$plays <- state$plays + 1
+    
+    state$previous_wager <- wager
+    if(red){
+      # WIN
+      state$B <- state$B + wager
+      state$previous_win <- TRUE
+    }else{
+      # LOSE
+      state$B <- state$B - wager
+      state$previous_win <- FALSE
+    }
+  state
+}
+
+
+#' Stopping rule
+#'
+#' Takes the state list and determines if the gambler has to stop
+#' @param state A list.  See one_play
+#' @return TRUE/FALSE
+stop_play <- function(state){
+  if(state$B <= 0) return(TRUE)
+  if(state$plays >= state$L) return(TRUE)
+  if(state$B >= state$W) return(TRUE)
+  FALSE
+}
+
+one_series <- function(
+    B
+  , W
+  , L
+  , M
+){
+
+  # initial state
+  state <- list(
+    B = B
+  , W = W
+  , L = L
+  , M = M
+  , plays = 0
+  , previous_wager = 0
+  , previous_win = TRUE
+  , count = 0
+  )
+  
+  # vector to store budget over series of plays
+  budget <- rep(NA, L)
+  play_number <- rep(NA, L)
+  
+  # For loop of plays
+  for(i in 1:L){
+    new_state <- state %>% one_play
+    budget[i] <- new_state$B
+    play_number[i] <- new_state$plays
+    if(new_state %>% stop_play){
+      return(play_number[1:i])
+    }
+    state <- new_state
+  }
+  play_number 
+}
+
+# helper function
+get_last <- function(x) x[length(x)] 
+
+
+# Simulation
+times_run_out_money <- rep(NA, 10000)
+for(j in seq_along(times_run_out_money)){
+  times_run_out_money[j] <- one_series(B = 200, W = 300, L = 1000, M = 100) %>% get_last
+}
+
+# Walk out money distribution
+hist(times_run_out_money, breaks = 100)
+```
+The picture above shows the average number of stops under 1000 simulations. The average value of simulation stops is about 200 times.
+
+```{r}
+# Estimated probability of the times of running out money
+mean(times_run_out_money)
+```
+
+# Conclusion
+
+---
+
+* Increasing the maximum wager and winning threshold will make the gambler more likely to lose more money.
+
+* Decreasing the winning threshold for stopping will make the gambler have a greater probability of walking out with extra money, but it will reduce the average loss of the gambler.
+
+* Increasing the budget will increase the probability of the gambler walking out with extra money and the gambler's loss at the same time.
