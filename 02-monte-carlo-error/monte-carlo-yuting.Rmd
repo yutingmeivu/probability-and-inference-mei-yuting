@@ -1,0 +1,73 @@
+---
+title: "monte-carlo-yuting"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+```
+```{r}
+  n = 1000
+  absolute_error <- c()
+  relative_error <- c()
+  w <- c()
+  log2 <- c()
+  sum <- c()
+  
+  
+  # Create row names
+  p_value <- c(0.01, 0.05, 0.10, 0.25, 0.50)
+  
+  # Create column names
+  a <- 2
+  i <- seq(1, 14, 1)
+  col <- a*2^i
+  
+  #p <- rep(NA, times = 14)
+  #sum <- cbind(sum_absolute, p)
+  
+  for(q in 1:length(p_value)){
+    for(p in 1:14){
+      prob_hat <- rbinom(n, col[p], p_value[q]) / col[p]
+      abe <- mean(abs(prob_hat - p_value[q]))
+      ree <- mean((abs(prob_hat - p_value[q]) / p_value[q]))
+      absolute_error <- append(absolute_error, abe)
+      relative_error <- append(relative_error, ree)
+      log2 <- append(log2, col[p])
+      w <- append(w, p_value[q])
+    }
+    sum$log2 <- c(log2)
+    sum$p_value <- c(w)
+    sum$absolute_error <- c(absolute_error)
+    sum$relative_error <- c(relative_error)
+  }
+
+
+  (sum <- data.frame(sum))
+
+```
+
+```{r}
+ab <- ggplot(sum, aes(x = log2, y = absolute_error,color=factor(p_value)))
+ab + geom_point(size = 3, alpha = 0.7) +
+  geom_line(alpha = 0.5) +
+  scale_x_continuous(trans = "log2")
+```
+
+```{r}
+re <- ggplot(sum, aes(x = log2, y = relative_error,color=factor(p_value)))
+re + geom_point(size = 3, alpha = 0.7) +
+  geom_line(alpha = 0.5) +
+  scale_x_continuous(trans = "log2")
+```
+
+
+
+
+
