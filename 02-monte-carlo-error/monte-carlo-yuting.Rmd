@@ -1,17 +1,103 @@
 ---
 title: "monte-carlo-yuting"
-output: github_document
+author: ' Yuting Mei'
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    number_sections: yes
+    toc_depth: 3
+    toc_float: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE, cache=TRUE)
 ```
+
+# Introduction
+
+Simulation generates approximate answers; there is some degree of error in a quantity estimated by Monte Carlo simulation. Intuitively, it seems that the degree of error should get smaller as the number of simulation replicates increases.
+
+# Terminology
+
+__Factorial Experiment__
+<br>
+In statistics, a full factorial experiment is an experiment whose design consists of two or more factors, each with discrete possible values or "levels", and whose experimental units take on all possible combinations of these levels across all such factors. The factors of this experiment are p and number of trials.
+
+__Statistical Distributions__
+<br>
+Statistical distributions or probability distributions describe the outcomes of varying a random variable, and the probability of occurrence of those outcomes. When the random variable takes only discrete values, the corresponding probability distributions are called discrete probability distributions. Examples of this kind are the binomial distribution, Poisson distribution, and hypergeometric distribution. On the other hand, when the random variable takes continuous values, the corresponding probability distributions are called continuous probability distributions. Examples of this kind are normal, exponential, and gamma distributions.
+
+__Random Sampling__
+<br>
+In statistics, a finite subset of individuals from a population is called a sample. In random sampling, the samples are drawn at random from the population, which implies that each unit of population has an equal chance of being included in the sample.
+
+__Probability Mass Function__
+<br>
+In probability and statistics, a probability mass function is a function that gives the probability that a discrete random variable is exactly equal to some value.
+
+__Binomial Distribution__
+<br>
+In probability theory and statistics, the binomial distribution with parameters n and p is the discrete probability distribution of the number of successes in a sequence of n independent experiments, each asking a yes–no question, and each with its own Boolean-valued outcome: success (with probability p) or failure (with probability q = 1 − p).  A single success/failure experiment is also called a Bernoulli trial or Bernoulli experiment, and a sequence of outcomes is called a Bernoulli process. In this experiment, our failure result is that the coin is facing the opposite side (p is 0), and the successful result is that the coin is facing upside (p is 1).
+
+In general, if the random variable X follows the binomial distribution with parameters n ∈ ℕ and p ∈ [0,1], we write X ~ B(n, p). The probability of getting exactly k successes in n independent Bernoulli trials is given by the probability mass function:
+  $P(X = k)=\frac{n!}{k!(n-k)!}p^k(1-p)^{n-k}$
+
+__Monte Carlo Simulation__
+<br>
+Monte Carlo simulations are used to model the probability of different outcomes in a process that cannot easily be predicted due to the intervention of random variables. It is a technique used to understand the impact of risk and uncertainty in prediction and forecasting models.
+
+__Absolute Error__
+<br>
+Absolute Error is the amount of error in your measurements. It is the difference between the measured value and “true” value. 
+
+The absolute error of the experiment is:
+absolute error = $|p - \widehat{p} |$,
+where $\widehat{p}$ is approximate error.
+
+__Relative Error__
+<br>
+Relative error is a measure of the uncertainty of measurement compared to the size of the measurement. It's used to put error into perspective. 
+
+The relative error of the experiment is:
+relative error = $\frac{|p - \widehat{p} |}{p}$, 
+where $\widehat{p}$ is approximate error.
+
+# Methology
+
+## Monte Carlo Simulation
+
+__Static Model Generation__
+<br>
+Every Monte Carlo simulation starts off with developing a deterministic model which closely resembles the real scenario. In this deterministic model, we use the most likely value (or the base case) of the input parameters. We apply mathematical relationships which use the values of the input variables, and transform them into the desired output. 
+
+__Input Distribution Identification__ 
+<br>
+In this experiment, we use the Monte Carlo method to simulate coin tossing. It is known that the tossing coin satisfies the binomial distribution, so there is no need to consider methods for distribution fitting.
+
+__Random Variable Generation__
+<br>
+After we have identified the underlying distributions for the input variables, we generate a set of random numbers (also called random variates or random samples) from these distributions. One set of random numbers, consisting of one value for each of the input variables, will be used in the deterministic model, to provide one set of output values. We then repeat this process by generating more sets of random numbers, one for each input distribution, and collect different sets of possible output values. This part is the core of Monte Carlo simulation.
+
+__Analysis__
+<br>
+After we have collected a sample of output values in from the simulation, we calculate the relative error and absolute error of the simulation, and visualize them to observe the variation of the error curve with the number of simulations under different probabilities p.
+
+# Parameters
+
+* number: 1000, number of observations.
+* size: ($2^2$, $2^3$, …, $2^{15}$), number of trials (zero or more).
+* p: (0.01, 0.05, 0.10, 0.25, 0.50), probability of success on each trial.
+
+# Results
 
 ```{r}
 library(dplyr)
 library(tidyverse)
 library(ggplot2)
 ```
+
 ```{r}
   n = 1000
   absolute_error <- c()
@@ -52,6 +138,7 @@ library(ggplot2)
   (sum <- data.frame(sum))
 
 ```
+The output of the above data frame is that the computer uses the Monte Carlo method to generate 1000 observations with the probability varying from 0.01, 0.05, 0.10, 0.25, 0.50, and the number of trials varying from $2^2$ to $2^{15}$. Then the computer calculated the absolute and relative errors between the approximate probabilities and the probabilities of these 1,000 observation samples.
 
 ```{r}
 ab <- ggplot(sum, aes(x = log2, y = absolute_error,color=factor(p_value)))
@@ -59,6 +146,7 @@ ab + geom_point(size = 3, alpha = 0.7) +
   geom_line(alpha = 0.5) +
   scale_x_continuous(trans = "log2")
 ```
+The figure above shows the absolute error of p from (0.01, 0.05, 0.10, 0.25, 0.50) and number of trials from $2^2$ to $2^{15}$. The x-axis represents the number of trials, the y-axis represents the absolute error, and different p is distinguished by five colors. It can be found that when the number of trials increases, the absolute error under different p gradually converges to 0. That is, when the number of trials is large enough, the approximate p of the sample($\widehat{p}$) is infinitely close to p.
 
 ```{r}
 re <- ggplot(sum, aes(x = log2, y = relative_error,color=factor(p_value)))
@@ -66,8 +154,13 @@ re + geom_point(size = 3, alpha = 0.7) +
   geom_line(alpha = 0.5) +
   scale_x_continuous(trans = "log2")
 ```
+The figure above shows the relative error of p from (0.01, 0.05, 0.10, 0.25, 0.50) and number of trials from $2^2$ to $2^{15}$. The x-axis represents the number of trials, the y-axis represents the relative error, and different p is distinguished by five colors. Similar to the picture above, it can be found that when the number of trials increases, the relative error under different p gradually converges to 0. That is, when the number of trials is large enough, the approximate p of the sample($\widehat{p}$) is infinitely close to p.
 
+# Conclusion
 
+By using Monte Carlo method to simulate experiments, we can find that when the number of trials is very large, the approximate probability of the sample will be infinitely close to (converge to) the objective probability value.
 
+# Importance
 
-
+* This conclusion is of great significance because it "explains" the long-term stability of the mean value of some random events.
+* This conclusion provides the possibility to measure uncertainty.
