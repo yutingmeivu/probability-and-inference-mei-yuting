@@ -6,6 +6,25 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+## Portfolio
+
+Name: Yuting Mei
+
+What was your journey to data science?
+I enjoy using statistical models to make predictions and analysis of data set.
+
+What's your hobby?
+Watching movies
+
+Where is your hometown?
+Changzhou, Jiangsu, China
+
+What's your favorite movie?
+Interstellar
+
+---
+
+Name: Hongyu Dai
 
 What was your journey to data science?
 I like both math and computer science, so I think Data science is the best way for me to combine them.
