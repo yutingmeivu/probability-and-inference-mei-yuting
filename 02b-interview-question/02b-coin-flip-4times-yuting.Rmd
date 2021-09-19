@@ -1,0 +1,106 @@
+---
+title: "02b-interview-question"
+author: "YutingMei"
+date: "9/17/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Suppose there are 5 coins. Four of the coins are fair with P(heads)=0.5, and one of the coins is biased with P(heads)=0.75. Suppose a coin is randomly selected and flipped 4 times resulting in 4 heads.
+
+# What is the probability that the selected coin was biased? That is, what is P(biased coin selected | HHHH)?
+
+# P(fair) = 0.8; P(biased) = 0.2
+fair_coltotal = 0.8
+biased_coltotal = 0.2
+fair_col = c()
+biased_col = c()
+
+# P(H|fair) = 0.5; P(H|biased) = 0.75
+fair_head = c()
+biased_head = c()
+fair_h = 0.5
+biased_h = 0.75
+
+fair_tail = c()
+biased_tail = c()
+
+# generate list for P(H..H|fair) and P(H..H|biased)
+fair_headn = c()
+biased_headn = c()
+
+# generate list for P(not H..H|fair) and P(not H..H|biased)
+fair_tailn = c()
+biased_tailn = c()
+
+# generate list for P(fair|H..H) and P(biased|H..H)
+headn_fair = c()
+headn_biased = c()
+
+
+# generate list for P(fair|tail..H) and P(biased|tail..H)
+tailn_fair = c()
+tailn_biased = c()
+
+# generate list for cell prob of P(fair and head) and P(biased and head)
+fair_and_head = c()
+biased_and_head = c()
+
+# generate list for cell prob of P(fair and tail) and P(biased and tail)
+fair_and_tail = c()
+biased_and_tail = c()
+
+# generate list for P(head) and P(tail)
+head_rowtotal = c()
+tail_rowtotal = c()
+
+coin = c()
+
+for(i in 1:4){
+  fair_head[i] = fair_h^i
+  biased_head[i] = biased_h^i
+  fair_tail[i] = 1- fair_head[i]
+  biased_tail[i] = 1- biased_head[i]
+  
+  fair_and_head[i] = fair_head[i] * fair_coltotal
+  biased_and_head[i] = biased_head[i] * biased_coltotal
+  head_rowtotal[i] = fair_and_head[i] + biased_and_head[i]
+  tail_rowtotal[i] = 1 - head_rowtotal[i]
+  tail_rowtotal[i] = 1- head_rowtotal[i]
+  headn_fair[i] = fair_and_head[i] / head_rowtotal[i]
+  headn_biased[i] = biased_and_head[i] / head_rowtotal[i]
+  fair_and_tail[i] = fair_tail[i] * tail_rowtotal[i]
+  biased_and_tail[i] = biased_tail[i] * tail_rowtotal[i]
+  tailn_fair[i] = fair_and_tail[i] / tail_rowtotal[i]
+  tailn_biased[i] = biased_and_tail[i] / tail_rowtotal[i]
+  fair_col[i] = fair_coltotal
+  biased_col[i] = biased_coltotal
+  fair_tailn[i] = 1- fair_head[i]
+  biased_tailn[i] = 1 - biased_head[i]
+}
+
+coin$fair_head = c(fair_head)
+coin$biased_head = c(biased_head)
+coin$fair_and_head = c(fair_and_head)
+coin$biased_and_head = c(biased_and_head)
+coin$head_rowtotal = c(head_rowtotal)
+coin$tail_rowtotal = c(tail_rowtotal)
+coin$fair_coltotal = c(fair_col)
+coin$biased_coltotal = c(biased_col)
+coin$headn_fair = c(headn_fair)
+coin$headn_biased = c(headn_biased)
+coin$fair_and_tail = c(fair_and_tail)
+coin$biased_and_tail = c(biased_and_tail)
+coin$tailn_fair = c(tailn_fair)
+coin$tailn_biased = c(tailn_biased)
+coin$fair_tailn = c(fair_tailn)
+coin$biased_tailn = c(biased_tailn)
+(coin = data.frame(coin))
+
+```
+
+
