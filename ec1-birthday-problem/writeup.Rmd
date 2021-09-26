@@ -1,0 +1,118 @@
+---
+title: "writeup"
+author: 'Yuting Mei'
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    number_sections: yes
+    toc_depth: 3
+    toc_float: yes
+---
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE, cache=TRUE)
+```
+
+# Introduction
+In this blog, we are going to use two different ways to solve the following question:
+In a class of N individuals, what is the probability that at least two students will share a birthday?
+
+## Assumption
+* birthdays are equally likely to fall on any day of the year, ignoring leap year.
+* Every day of the year can be picked when sampling.
+* The birthdays among students are evenly distributed throughout the year, and there are no special circumstances such as twins.
+* Assuming that there are 365 days in a year, leap years are not considered.
+
+# Method
+## Simulation
+
+### Definition
+Simulation is a way to model random events, such that simulated outcomes closely match real-world outcomes. By observing simulated outcomes, researchers gain insight on the real world.
+
+### Why Simulation
+Some situations do not lend themselves to precise mathematical treatment. Others may be difficult, time-consuming, or expensive to analyze. In these situations, simulation may approximate real-world results; yet, require less time, effort, and/or money than other approaches.
+
+### How to Conduct a Simulation
+A simulation is useful only if it closely mirrors real-world outcomes. The steps required to produce a useful simulation are presented below.
+
+* Describe the possible outcomes.
+* Link each outcome to one or more random numbers.
+* Choose a source of random numbers.
+* Choose a random number.
+* Based on the random number, note the "simulated" outcome.
+* Repeat steps 4 and 5 multiple times; preferably, until the outcomes show a stable pattern.
+* Analyze the simulated outcomes and report results.
+
+For more information about the related terminology, methology and examples about statistical simulation method, you can click the following link to have a look:
+02-monte-carlo-error:https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/02-monte-carlo-error
+
+## Analytic
+We can first discuss the complement of this problem, that is, the probability of two different birthdays among all students in a certain class size. Assuming that the size of the class size is n, then when n<365, the probability that the birthday from the first person to the nth person is different is 1,364/365, 363/365. . . , (365-n+1)/365. Therefore, when the class size is n, the probability that at least two students in the class have the same birthday is
+$P(n) = 1- \frac{365!}{365^n(365-n)!}$
+
+# Result
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+```{r}
+# analytic solution
+prob_sum = c()
+prob_a = c()
+for (i in 1:80){
+  prob_a[i] =  1 - (factorial(i) * choose(365, i) / 365 ^ i)
+}
+
+# simulation solution
+replicates = c()
+generate_class <- function(class_size){
+  birthdays <- sample(1:365, class_size, replace = TRUE)
+  data.frame(student_id = 1:class_size, birthday = birthdays)
+}
+
+check_birthday <- function(class){
+  class_summary <- class %>% 
+    summarize(n = n(), n_bday = n_distinct(birthday)) %>% 
+    mutate(shared = n > n_bday)
+  class_summary[["shared"]]
+}
+
+for(i in 1:80){
+  replicates[i] <- replicate(1000, i %>% generate_class %>% check_birthday) %>% mean()
+}
+
+prob_sum$analytic = c(prob_a)
+prob_sum$simulation = c(replicates)
+prob_sum = data.frame(prob_sum)
+```
+
+```{r}
+prob_sum %>%
+  ggplot(aes(x = seq(1, 80))) +
+  geom_point(aes(y = analytic, color = 'analytic'),  alpha = 0.4, size = 5, pch = 11) +
+  geom_point(aes(y = simulation, color = 'simulation'),  alpha = 0.4, size = 3.5, pch = 16) +
+  labs(x = "Size of group", y = "Probability of at least shared birthday") +
+  geom_hline(aes(yintercept = 1), color = "grey", linetype = "dashed") +
+  geom_hline(aes(yintercept = 0), color = "grey", linetype = "dashed") +
+  theme_bw()
+```
+<br>
+The figure above shows the solution to this problem using two different tools. The x-axis represents the class size from 1 to 80, and the y-axis represents the corresponding probability values obtained using the two methods of analytic and simulation.
+
+# Conclusion
+* When the class size gradually increases, the probability that two or more students have the same probability also increases.
+* When the class size exceeds 50, the probability that two or more students have the same birthday is almost close to 1.
+
+# Comparison
+## Prons and Cons with Simulation Method
+* It can solve the problem of statistical properties when the sample distribution is unknown, and calculate the corresponding probability.
+* The problem of determinism should be transformed into a problem of randomness to be solved.
+* The simulation results have random errors.
+* Usually a lot of samples are needed for simulation, which is very time-consuming.
+
+## Prons and Cons with Analytic Method
+* There is no random error in the result, because the distribution of the sample and the population is exactly the same.
+* The calculation speed is much faster than the simulation method.
+* It is necessary to know the probability distribution that the sample obeys, and in real-world research, we cannot know the probability distribution function of the sample in most cases.
