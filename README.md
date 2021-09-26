@@ -9,3 +9,4 @@ a GitHub repo for 5620 Probability and Statistical Inference
 02-monte-carlo-error:https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/02-monte-carlo-error
 
 02b-interview-question: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/02b-interview-question
+
