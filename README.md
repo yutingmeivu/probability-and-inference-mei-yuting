@@ -10,3 +10,6 @@ a GitHub repo for 5620 Probability and Statistical Inference
 
 02b-interview-question: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/02b-interview-question
 
+03-discrete-probability-calculations: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/03-discrete-probability-calculations
+
+ec1-birthday-problem: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/ec1-birthday-problem
