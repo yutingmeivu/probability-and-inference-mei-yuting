@@ -1,0 +1,182 @@
+---
+title: "discrete-probability-calculations"
+author: 'Yuting Mei'
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    number_sections: yes
+    toc_depth: 3
+    toc_float: yes
+---
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE, cache=TRUE)
+```
+# Introduction
+The world series is a best-of-7 match-up between the champions of the American and National Leagues of Major League Baseball. In this blog, I'm going to explain probability calculations related to the world series. 
+
+## Setup
+* Suppose that the Braves and the Yankees are teams competing in the World Series.
+* Suppose that in any given game, the probability that the Braves win is $P_B$ and the probability that the Yankees win is $P_Y=1−P_B$.
+
+## Assumption
+* Braves and Yankees will not affect each other during the game.
+* There is no external force that affects or interrupts the game between the two teams.
+* The players of the two teams all played steadily during the game.
+
+## Question
+* What is the probability that the Braves win the World Series given that $P_B=0.55$?
+* What is the probability that the Braves win the World Series given that $P_B=x$? This will be a figure (see below) with $P_B$ on the x-axis and P(Braves win World Series) on the y-axis.
+* Suppose one could change the World Series to be best-of-9 or some other best-of-X series. What is the shortest series length so that $P(Braves win World Series|P_B=0.55)≥0.8$.
+* What is the shortest series length so that $P(Braves win World Series|P_B=x)≥0.8$? This will be a figure (see below) with $P_B$ on the x-axis and series length is the y-axis.
+* Calculate $P(P_B=0.55|Braves win World Series in 7 games)$ under the assumption that either $P_B=0.55$ or $P_B=0.45$. Explain your solution.
+
+# Method
+We'll discuss the odds of the Braves winning the World Series under different scenarios below. Before we get to the terminology, let's analyze the problem: since seven games must be played, we need to make sure the Braves lose three games before the final inning of the game is over, and win for the fourth time in that final inning. For the Braves, it is a Bernoulli experiment because each race has two possible outcomes: victory and defeat. In statistics, we call the discrete probability distribution of the number of failures before a study reaches a specified number of successes a negative binomial distribution. And we're going to use this distribution function and Bayes' formula to answer those questions.
+
+## Terminology
+__Factorial__
+<br>
+Factorial, in mathematics, the product of all positive integers less than or equal to a given positive integer and denoted by that integer and an exclamation point. For example, factorial seven is written 7!, meaning 1 × 2 × 3 × 4 × 5 × 6 × 7. Factorial zero is defined as equal to 1.
+
+__Combination Number Formula__
+<br>
+In mathematics, a combination is a selection of items from a collection, such that the order of selection does not matter (unlike permutations). For example, given three fruits, say an apple, an orange and a pear, there are three combinations of two that can be drawn from this set: an apple and a pear; an apple and an orange; or a pear and an orange. More formally, a k-combination of a set S is a subset of k distinct elements of S. If the set has n elements, the number of k-combinations is equal to the binomial coefficient
+$\binom{n}{k} = \frac{n!}{(n-k)!k!} = \frac{n(n-1)...(n-k+1)}{k(k-1)...1}$
+
+__Independent and identically distributed random variables__
+<br>
+In probability theory and statistics, a collection of random variables is independent and identically distributed if each random variable has the same probability distribution as the others and all are mutually independent.
+
+__Bernoulli trial__
+<br>
+In the theory of probability and statistics, a Bernoulli trial (or binomial trial) is a random experiment with exactly two possible outcomes, "success" and "failure", in which the probability of success is the same every time the experiment is conducted.
+
+__Negative Binomial Distribution__
+<br>
+In probability theory and statistics, the negative binomial distribution is a discrete probability distribution that models the number of successes in a sequence of independent and identically distributed Bernoulli trials before a specified (non-random) number of failures (denoted r) occurs. For example, we can define rolling a 6 on a die as a failure, and rolling any other number as a success, and ask how many successful rolls will occur before we see the third failure (r = 3). In such a case, the probability distribution of the number of non-6s that appear will be a negative binomial distribution. 
+
+The probability mass function of the negative binomial distribution is:
+$f(k;r,p)\equiv\Pr(X\equiv k)=\binom{k+r-1}{r-1}(1-p)^kp^r$
+where r is the number of successes, k is the number of failures, and p is the probability of success.
+
+__Bayes' theorem__
+<br>
+In probability theory and statistics, Bayes' theorem (alternatively Bayes' law or Bayes' rule; recently Bayes–Price theorem), named after the Reverend Thomas Bayes, describes the probability of an event, based on prior knowledge of conditions that might be related to the event. For example, if the risk of developing health problems is known to increase with age, Bayes' theorem allows the risk to an individual of a known age to be assessed more accurately (by conditioning it on their age) than simply assuming that the individual is typical of the population as a whole.
+
+Bayes' theorem is stated mathematically as the following equation:
+$P(A|B) = \frac{P(B|A)P(A)}{P(B)}$
+where A and B are events and $P(B)\ne 0$
+$P(A|B)$ is a conditional probability: the probability of event A occurring given that B is true. It is also called the posterior probability of A given B.
+$P(B|A)$ is also a conditional probability: the probability of event B occurring given that A is true. 
+P(A) and P(B) are the probabilities of observing A and B respectively without any given conditions; they are known as the marginal probability or prior probability. A and B must be different events.
+
+__Independent events__
+<br>
+An independent event is an event that has no connection to another event's chances of happening (or not happening). In other words, the event has no effect on the probability of another event occurring. 
+
+# Result
+```{r}
+library(ggplot2)
+library("dplyr")
+```
+
+1. What is the probability that the Braves win the World Series given that $P_B=0.55$?
+```{r}
+pnbinom(3, 4, 0.55)
+```
+In this question, in order to ensure that the Braves win the game, they must lose three games before they can achieve their fourth victory for the last time. Therefore, the parameters of the negative binomial distribution are: r = 4, k = 3, p = 0.55. Given that the probability of Braves winning is 0.55, their probability of winning the game is 0.608.
+
+2. What is the probability that the Braves win the World Series given that $P_B=x$? This will be a figure (see below) with $P_B$ on the x-axis and P(Braves win World Series) on the y-axis.
+```{r}
+prob_b = c()
+prob_win = c()
+prob_sum = c()
+
+for (i in seq(1, 101)){
+  prob_b[i] = 0.5 + 0.005 * (i - 1)
+  prob_win[i] = pnbinom(3, 4, prob_b[i])
+}
+
+prob_sum$prob_b = c(prob_b)
+prob_sum$prob_win = c(prob_win)
+
+prob_sum = data.frame(prob_sum)
+prob_sum %>%
+  ggplot(aes(x = prob_b, y = prob_win)) +
+  geom_line() +
+  labs(x = "Probability of the Bayes winning a head-to-head matchup", 
+       y = "Pr(Win World Series)") +
+  theme_bw()
+```
+In the above figure, the x-axis represents the different probabilities of Braves winning the game, and the y-axis represents the change in the probability of them winning the World Series under the corresponding probability. The curve increases with the increase of the x-axis, and starts to grow slowly near 0.9.
+
+3. Suppose one could change the World Series to be best-of-9 or some other best-of-X series. What is the shortest series length so that $P(Braves win World Series|P_B=0.55)≥0.8$.
+```{r}
+prob_win2 = c()
+series = c()
+sum = c()
+for(i in seq(3,100,2)){
+  series[i] = i
+  prob_win2[i] = pnbinom(floor(i/2), ceiling(i/2), .55)
+}
+sum$prob_win2 = prob_win2
+sum$series = series
+sum = data.frame(sum)
+sum$series[which(prob_win2 >= 0.8)][1]
+```
+The above code calculates the shortest series required to win the game with a known Braves probability of 0.55. The probability of winning the game is greater than 0.8. The solution is similar to the first question. We need to ensure that Braves can obtain more than half of the total series (for example, four out of seven games, which is bigger than 3.5). The shortest series we got was 71 rounds.
+
+4. What is the shortest series length so that $P(Braves win World Series|P_B=x)≥0.8$? This will be a figure (see below) with $P_B$ on the x-axis and series length is the y-axis.
+```{r}
+prob_b2= c()
+prob_win3 = c()
+series2 = c()
+sum_2 = c()
+
+for (i in 1:101){
+  prob = 0.5 + 0.005 * (i - 1)
+  win = 0
+  for (j in seq(3, 10000, 2)){
+    if (win > 0.8){
+      break
+    }
+    else{
+      prob_b2 = append(prob_b2, prob)
+      win = pnbinom(floor(j / 2), ceiling(j / 2), prob)
+      prob_win3 = append(prob_win3, win)
+      serie = j
+      series2 = append(series2, serie)
+    }
+  }
+}
+sum_2$prob_b2 = c(prob_b2)
+sum_2$prob_win3 = c(prob_win3)
+sum_2$series2 = c(series2)
+sum_2 = data.frame(sum_2)
+s = sum_2 %>%
+  count(prob_b2)
+```
+
+```{r}
+ggplot(s, aes(x = prob_b2, y = n)) +
+  geom_line() +
+  labs(x = "Probability of the Braves winning a head-to-head matchup",
+       y = "Series length") +
+  theme_bw()
+```
+In the above figure, the x-axis represents the probability of Braves winning (from 0.5 to 1), and the y-axis represents the shortest series required when the probability of Braves winning the game is greater than or equal to 0.8.
+
+5. Calculate $P(P_B=0.55|Braves win World Series in 7 games)$ under the assumption that either $P_B=0.55$ or $P_B=0.45$. Explain your solution.
+```{r}
+prob_b_win = dnbinom(3, 4, 0.55)* 0.5 + dnbinom(3, 4, 0.45)* 0.5
+prob_0.55_b_win = dnbinom(3, 4, 0.55)* 0.5
+(probb = prob_0.55_b_win / prob_b_win)
+```
+We first define event A as Braves winning, and event B as Braves winning World series in 7 games. Then the problem is the probability of solving P(A|B). According to Bayes' theorem,$P(A|B) = \frac{P(B|A)P(A)}{P(B)}$
+where P(B) can be expressed as the cumulative sum of all possible outcomes of P(B|A)P(A). There are two possible outcomes for Event A, 0.45 and 0.55. Therefore, the negative binomial distribution when the numerator is r = 4, k = 3, and p = 0.55 is multiplied by the probability of Braves winning. Since Braves has two possible probabilities for winning, the probability of drawing one of them is 0.5. The denominator is the cumulative sum of the negative binomial distribution satisfying r = 4, k = 3, p = 0.55 multiplied by 0.5 and the negative binomial distribution satisfying r = 4, k = 3, p = 0.45 multiplied by 0.5. From the result point of view, when the possible outcomes of P_B are 0.55 and 0.45, the conditional probability $P(P_B=0.55|Braves win World Series in 7 games)$ is equal to the probability of Braves winning. Then it means that event A (Braves wins) and event B (Braves wins World Series) are independent events.
+
+# Conclusion
+* When the probability of a team winning in a single time increases, the probability of the team ultimately winning the game will also increase.
+* When the probability of a team winning in a single time increases, the series required for the team to win the game with a high probability in the end will shrink. In particular, when the probability of a team winning a single time is 0.5, the team will not have the possibility of winning the game more than 0.8.
