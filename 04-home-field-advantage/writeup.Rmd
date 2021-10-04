@@ -1,0 +1,356 @@
+---
+title: "04-home-field-advantage"
+author: 'Yuting Mei'
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    number_sections: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# library(data.table)
+library("dplyr")
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r}
+library(readr)
+apo <- read_csv("all-possible-world-series-outcomes.csv")
+```
+
+```{r}
+library(data.table)
+```
+# introduction
+The home field advantage is the edge which a team may have when playing a game at its home stadium. For example, it is the edge the Braves may have over the Yankees when the head-to-head match-up is in Atlanta. It is the advantage the Yankees may have when the head-to-head match-up is in New York.
+
+The World Series is a first-to-4-wins match-up between the champions of the American and National Leagues of Major League Baseball. In this assignment, you are going to use simulation and analytic methods to compare the probability of winning the World Series with and without home field advantage.
+
+## Set up
+* Suppose that the Braves and the Yankees are teams competing in the World Series.
+
+* The table below has the two possible schedules for each game of the series. (NYC = New York City, ATL = Atlanta)
+
+| Overall advantage | Game1 | Game2 | Game3 | Game4 | Game5 | Game6 |  Game7 |
+|:---:|:---:|:-----:|:----:|:----:|:----:|:----:|:----:|
+|  Braves  |   ATL |  ATL    |  NYC  |  NYC  |  NYC  |  ATL  |  ATL  |
+|  Yankees  |   NYC |  NYC    |   ATL |  ATL  |  ATL  |  NYC  |  NYC  |
+
+* Let $P_B$ be the probability that the Braves win a single head-to-head match-up with the Yankees, under the assumption that home field advantage doesn’t exist. Let $P_B^H$ denote the probability that the Braves win a single head-to-head match-up with the Yankees as the home team (H for home). Let $P_B^A$ denote the probability that the Braves win a single head-to-head match-up with the away team (A for away).
+
+| Game location | No Advantage | Advantage |
+|:---:|:---:|:-----:|
+|  ATL  |   $P_B$ |  $P_B^H = P_B*1.1$    |
+|  NYC  |   $P_B$ |  $P_B^A = 1-(1-P_B)*1.1$    |
+
+## Assumption
+* Braves and Yankees will not affect each other during the game.
+* There is no external force that affects or interrupts the game between the two teams.
+* The players of the two teams all played steadily during the game.
+* The probability of each team in each game obeys independent and identical distribution
+* The game must be over seven rounds before it is over
+
+# Method
+If you are interested in how Braves win the world series games, and how to calculate the probability each time without advantage, you can click the link below:
+https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/03-discrete-probability-calculations
+
+When we condider the advantage, we need to find each probability of winning accoding to the game location. Since each game is an indepedent event with each other, so we can multiple them together to get the final probability of compound event.
+
+## Terminology
+
+__Simulation__
+<br>
+Simulation is a way to model random events, such that simulated outcomes closely match real-world outcomes. By observing simulated outcomes, researchers gain insight on the real world.
+
+if you are interested in how simulation and analytic method works? why we need them? What is the pros and cons between the two mehods? You can click the link below:
+https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/ec1-birthday-problem
+
+__Random Sampling__
+<br>
+In statistics, a finite subset of individuals from a population is called a sample. In random sampling, the samples are drawn at random from the population, which implies that each unit of population has an equal chance of being included in the sample.
+
+__Negative Binomial Distribution__
+<br>
+In probability theory and statistics, the negative binomial distribution is a discrete probability distribution that models the number of successes in a sequence of independent and identically distributed Bernoulli trials before a specified (non-random) number of failures (denoted r) occurs. For example, we can define rolling a 6 on a die as a failure, and rolling any other number as a success, and ask how many successful rolls will occur before we see the third failure (r = 3). In such a case, the probability distribution of the number of non-6s that appear will be a negative binomial distribution. 
+
+The probability mass function of the negative binomial distribution is:
+$f(k;r,p)\equiv\Pr(X\equiv k)=\binom{k+r-1}{r-1}(1-p)^kp^r$
+where r is the number of successes, k is the number of failures, and p is the probability of success.
+
+__Independent events__
+<br>
+An independent event is an event that has no connection to another event's chances of happening (or not happening). In other words, the event has no effect on the probability of another event occurring. 
+
+__Absolute Error__
+<br>
+Absolute Error is the amount of error in your measurements. It is the difference between the measured value and “true” value. 
+
+The absolute error of the experiment is:
+absolute error = $|p - \widehat{p} |$,
+where $\widehat{p}$ is approximate error.
+
+__Relative Error__
+<br>
+Relative error is a measure of the uncertainty of measurement compared to the size of the measurement. It's used to put error into perspective. 
+
+The relative error of the experiment is:
+relative error = $\frac{|p - \widehat{p} |}{p}$, 
+where $\widehat{p}$ is approximate error.
+
+# Result
+```{r}
+# analytic
+
+# with advantage
+# Get all possible outcomes
+# apo <- fread("all-possible-world-series-outcomes.csv")
+
+# Home field indicator
+hfi <- c(0,0,1,1,1,0,0) #{NYC, NYC, ATL, ATL, ATL, NYC, NYC}
+
+# P_B
+pb <- 0.55
+advantage_multiplier <- 1.1 # Set = 1 for no advantage
+pbh <- 0.55*advantage_multiplier
+pba <- 1 - (1 - 0.55)*advantage_multiplier
+
+apo = data.table(apo)
+
+# Calculate the probability of each possible outcome
+apo[, p := NA_real_] # Initialize new column in apo to store prob
+for(i in 1:nrow(apo)){
+  prob_game <- rep(1, 7)
+  for(j in 1:7){
+    p_win <- ifelse(hfi[j], pbh, pba)
+    prob_game[j] <- case_when(
+        apo[i,j,with=FALSE] == "W" ~ p_win
+      , apo[i,j,with=FALSE] == "L" ~ 1 - p_win
+      , TRUE ~ 1
+    )
+  }
+  apo[i, p := prod(prob_game)] # Data.table syntax
+}
+
+# Sanity check: does sum(p) == 1?
+apo[, sum(p)] # This is data.table notation
+
+# Probability of overall World Series outcomes
+apo[, sum(p), overall_outcome]
+prob_with = apo[, sum(p), overall_outcome][1,2] %>% as.numeric()
+prob_with
+
+# without advantage
+prob_without = pnbinom(3, 4, 0.55)
+prob_without
+```
+The above data frame shows the probability of Braves win and lose the world series with advantage by using analytic method. And the number shows the probability of Braves win the world series without advantage by usinf analytic method.
+
+```{r}
+# simulation 
+# with advantage
+
+# generate_game is designed to do sampling simulation of the results of the games, the expected outcome is a data frame with the first column: the index of games, the second column: the possible outcome of Braves at each round(0 represents lose and 1 represents win)
+generate_game = function(game_number){
+  game_outcome = c()
+# Need to complete seven rounds every time
+for(i in 1:length(hfi)){
+  # In order to ensure that the two teams can complete seven games, it is necessary to exclude all situations where the game ends before the seventh game: 1. Win in advance: win more than three times before the seventh game; 2. Lose in advance: in the seventh game Losing more than three times before a round (getting zero points in the first four rounds, only getting one point in the first five rounds, and only two points in the first six rounds), which is equivalent to winning i-4 or less in the first i round (when i>4)
+  if(sum(game_outcome, na.rm = TRUE) < 4){
+    if(i < 4 | (sum(game_outcome, na.rm = TRUE) >= (i - 4))){
+      game_outcome[i] = case_when(
+    hfi[i] == 0 ~ sample(0:1, 1, replace = TRUE, prob = c(1 - pba, pba)),
+    hfi[i] == 1 ~ sample(0:1, 1, replace = TRUE, prob = c(1 - pbh, pbh))
+    )
+    }
+    else{
+      game_outcome[i] = NA
+    }
+  }
+  else{
+    game_outcome[i] = NA
+  }
+}
+  if(sum(game_outcome, na.rm = TRUE) <= 2){
+    game_outcome[length(hfi)] = NA
+  }
+data.frame(game_index = 1:game_number, game_outcome)
+}
+
+
+check_final = function(df){
+df %>%
+  summarise(final_outcome = ifelse(sum(df[, 2], na.rm = TRUE) == 4, 1, 0))
+}
+```
+
+```{r}
+prob_with_hat = replicate(50000, generate_game(7) %>% check_final()) %>% as.numeric() %>% mean(na.rm = TRUE)
+prob_with_hat
+```
+The above number shows the probability of Braves win the world series with advantage by using simulation method.
+
+```{r}
+# simulation
+# without advantage
+generate_game2 = function(game_number){
+  game_outcome = c()
+for(i in 1:game_number){
+  if(sum(game_outcome, na.rm = TRUE) < 4){
+    if(i < 4 | (sum(game_outcome, na.rm = TRUE) >= (i - 4))){
+      game_outcome[i] = sample(0:1, 1, replace = TRUE, prob = c(1 - pb, pb))
+    }
+    else{
+      game_outcome[i] = NA
+    }
+  }
+  else{
+    game_outcome[i] = NA
+  }
+}
+  if(sum(game_outcome, na.rm = TRUE) <= 2){
+    game_outcome[length(hfi)] = NA
+  }
+data.frame(game_index = 1:game_number, game_outcome)
+}
+
+check_final2 = function(df){
+df %>%
+  summarise(final_outcome = ifelse(sum(df[, 2], na.rm = TRUE) == 4, 1, 0))
+}
+```
+
+```{r}
+prob_without_hat = replicate(50000, generate_game2(7) %>% check_final2()) %>% as.numeric() %>% mean(na.rm = TRUE)
+prob_without_hat 
+```
+The above number shows the probability of Braves win the world series without advantage by using simulation method.
+
+```{r}
+# calculate absolute error and relative error with advantage
+(absolute_error_with = abs(prob_with - prob_with_hat))
+(relative_error_with = abs(prob_with - prob_with_hat) / prob_with)
+
+# calculate absolute error and relative error without advantage
+(absolute_error_without = abs(prob_without - prob_without_hat))
+(relative_error_without = abs(prob_without - prob_without_hat) / prob_without)
+```
+The first set of numbers show the absolute error and relative error with advantage by using simulation and analytic method. The second set of numbers show that without advantage.
+
+```{r}
+# different probabilities depend on pb
+
+# analytic with advantage
+prob_with_seq = c()
+prob_b = c()
+apo[, p := NA_real_] # Initialize new column in apo to store prob
+for(k in seq(1, 41)){
+  prob_b[k] = 0.5 + 0.01 * (k - 1)
+  pbh <- prob_b[k]*advantage_multiplier
+  pba <- 1 - (1 - prob_b[k])*advantage_multiplier
+  # Calculate the probability of each possible outcome
+for(i in 1:nrow(apo)){
+  prob_game <- rep(1, 7)
+  for(j in 1:7){
+    p_win <- ifelse(hfi[j], pbh, pba)
+    prob_game[j] <- case_when(
+        apo[i,j,with=FALSE] == "W" ~ p_win
+      , apo[i,j,with=FALSE] == "L" ~ 1 - p_win
+      , TRUE ~ 1
+    )
+  }
+  apo[i, p := prod(prob_game)] # Data.table syntax
+  }
+prob_with_seq[k] = apo[, sum(p), overall_outcome][1,2] %>% as.numeric()
+}
+```
+
+```{r}
+prob_with_seq
+```
+The above sequence shows the probability of Braves winning with advantage for the $P_B$ from 0.5 to 0.9 by using analytic method.
+
+```{r}
+# analytics without advantage
+prob_without_seq_2 = c()
+for(i in 1:41){
+  prob_b[i] = 0.5 + 0.01 * (i - 1)
+  prob_without_seq_2[i] = pnbinom(3, 4, prob_b[i])
+}
+prob_without_seq_2
+```
+The above sequence shows the probability of Braves winning without advantage for the $P_B$ from 0.5 to 0.9 by using analytic method.
+
+```{r}
+prob_b = c()
+for(i in 1:41){
+  prob_b[i] = 0.5 + 0.01 * (i - 1)
+}
+sum = data.frame(prob_b, prob_with_seq, prob_without_seq_2)
+sum$difference = sum$prob_with_seq - sum$prob_without_seq_2
+
+ggplot(sum, aes(x = prob_b)) +
+  geom_line(aes(y = difference)) +
+  # geom_line(aes(y = prob_with_seq)) +
+  # geom_line(aes(y = prob_without_seq_2)) +
+  labs(x = "different probability of Braves win", y = "difference between error", 
+       title = "Difference of probability depends on probability B") +
+  theme_bw()
+```
+The above figure shows how the difference of probability with and without advantage changes when the $P_B$ changes. The x axis represents the $P_B$ changes from 0.5 to 0.9, and the y axis represents the corresponding difference of probabilities with and without advantage. 
+```{r}
+# different probabilities depend on advantage
+
+# analytic with different advantage(when advantage = 1, there is no advantage)
+prob_with_seq_a = c()
+advantage = c()
+apo[, p := NA_real_] # Initialize new column in apo to store prob
+for(k in seq(1, 9)){
+  prob_b = 0.55
+  advantage[k] = 1 + 0.1 *(k -1)
+  pbh <- prob_b*advantage[k]
+  pba <- 1 - (1 - prob_b)*advantage[k]
+  # Calculate the probability of each possible outcome
+for(i in 1:nrow(apo)){
+  prob_game <- rep(1, 7)
+  for(j in 1:7){
+    p_win <- ifelse(hfi[j], pbh, pba)
+    prob_game[j] <- case_when(
+        apo[i,j,with=FALSE] == "W" ~ p_win
+      , apo[i,j,with=FALSE] == "L" ~ 1 - p_win
+      , TRUE ~ 1
+    )
+  }
+  apo[i, p := prod(prob_game)] # Data.table syntax
+  }
+prob_with_seq_a[k] = apo[, sum(p), overall_outcome][1,2] %>% as.numeric()
+}
+```
+
+```{r}
+prob_with_seq_a
+```
+The above sequence of data shows the different probability with taking advantage into consideration when advantage from 1 to 1.8 with $P_B$ fixed to 0.55. The first element of this sequence is without advantage. 
+
+```{r}
+sum_a = data.frame(advantage, prob_with_seq_a)
+
+ggplot(sum_a, aes(x = advantage, y = prob_with_seq_a)) +
+  geom_line() +
+  labs(x = "different advantages", y = "corresbonding probability", 
+       title = "Difference of probability depends on advantages") +
+  theme_bw()
+```
+The above figure shows how the difference in probabilities (with vs without home field advantage) depend on the advantage factor. The x axis represents the different advantages(from 1 to 1.8), and the y axis represents the probabilities of winning with different advantages, $P_B$ in this figure equals to 0.55.
+
+# Conclusion
+*  It seems that the difference in probabilities fluctuates when $P_B$ increases, so the difference of probabilitites might have little relationship with the $P_B$.
+* The difference in probabilities accoding to the advantages decreases when the advantage increases. 
