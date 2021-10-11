@@ -12,6 +12,8 @@ a GitHub repo for 5620 Probability and Statistical Inference
 
 03-discrete-probability-calculations: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/03-discrete-probability-calculations
 
-ec1-birthday-problem: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/ec1-birthday-problem
-
 04-home-field-advantage: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/04-home-field-advantage
+
+05-log-transformation: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/05-log-transformation
+
+ec1-birthday-problem: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/ec1-birthday-problem
