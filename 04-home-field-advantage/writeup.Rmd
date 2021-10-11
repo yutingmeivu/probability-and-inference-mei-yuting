@@ -11,8 +11,8 @@ output:
     toc_float: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE, cache=TRUE)
 ```
 
 ```{r}
@@ -90,6 +90,10 @@ __Independent events__
 <br>
 An independent event is an event that has no connection to another event's chances of happening (or not happening). In other words, the event has no effect on the probability of another event occurring. 
 
+__Law of large numbers__
+<br>
+In probability theory, the law of large numbers (LLN) is a theorem that describes the result of performing the same experiment a large number of times. According to the law, the average of the results obtained from a large number of trials should be close to the expected value and will tend to become closer to the expected value as more trials are performed.
+
 __Absolute Error__
 <br>
 Absolute Error is the amount of error in your measurements. It is the difference between the measured value and “true” value. 
@@ -107,6 +111,9 @@ relative error = $\frac{|p - \widehat{p} |}{p}$,
 where $\widehat{p}$ is approximate error.
 
 # Result
+
+## Question 1
+Compute analytically the probability that the Braves win the world series when the sequence of game locations is {NYC, NYC, ATL, ATL, ATL, NYC, NYC}. Calculate the probability with and without home field advantage when $P_B=0.55$. What is the difference in probabilities?
 ```{r}
 # analytic
 
@@ -141,19 +148,22 @@ for(i in 1:nrow(apo)){
 }
 
 # Sanity check: does sum(p) == 1?
-apo[, sum(p)] # This is data.table notation
+# apo[, sum(p)] # This is data.table notation
 
 # Probability of overall World Series outcomes
-apo[, sum(p), overall_outcome]
-prob_with = apo[, sum(p), overall_outcome][1,2] %>% as.numeric()
+# apo[, sum(p), overall_outcome]
+prob_with = apo[, sum(p), overall_outcome][1,2]
+# prob_with = apo[, sum(p), overall_outcome]
 prob_with
 
 # without advantage
 prob_without = pnbinom(3, 4, 0.55)
 prob_without
 ```
-The above data frame shows the probability of Braves win and lose the world series with advantage by using analytic method. And the number shows the probability of Braves win the world series without advantage by usinf analytic method.
+The step to calculate the probability of the final outcome by using analytic method is to divide the target event into three steps. In the first step, we need to list all possible game results. The second step is to multiply the probability of Braves’s home win in seven games to obtain all the possibilities(because all events are independent and identically distributed, so each events that Braves win and lose the competition are independent events). The corresponding probability that the result will appear, the last step is to add up the probability of the event that Braves wins and divide the result by the total probability (which should equals to 1).The probability of Braves win the world series with advantage by using analytic method is 0.604221. And the number shows the probability of Braves win the world series without advantage by usinf analytic method is 0.60828.
 
+## Question 2
+Calculate the same probabilities as the previous question by simulation.
 ```{r}
 # simulation 
 # with advantage
@@ -196,7 +206,7 @@ df %>%
 prob_with_hat = replicate(50000, generate_game(7) %>% check_final()) %>% as.numeric() %>% mean(na.rm = TRUE)
 prob_with_hat
 ```
-The above number shows the probability of Braves win the world series with advantage by using simulation method.
+The simulation method is to take a large number of samples according to the probability of occurrence of different events and then calculate the average value after sampling as the probability of the corresponding event (according to the law of large numbers, when the number of trials is very large, the average value of the sampling sample will gradually converge to what we expect about the probability value). The probability of Braves win the world series with advantage by using simulation method is 0.60312.
 
 ```{r}
 # simulation
@@ -232,8 +242,10 @@ df %>%
 prob_without_hat = replicate(50000, generate_game2(7) %>% check_final2()) %>% as.numeric() %>% mean(na.rm = TRUE)
 prob_without_hat 
 ```
-The above number shows the probability of Braves win the world series without advantage by using simulation method.
+The probability of Braves win the world series without advantage by using simulation method is 0.6113.
 
+## Question 3
+What is the absolute and relative error for your simulation in the previous question?
 ```{r}
 # calculate absolute error and relative error with advantage
 (absolute_error_with = abs(prob_with - prob_with_hat))
@@ -243,7 +255,7 @@ The above number shows the probability of Braves win the world series without ad
 (absolute_error_without = abs(prob_without - prob_without_hat))
 (relative_error_without = abs(prob_without - prob_without_hat) / prob_without)
 ```
-The first set of numbers show the absolute error and relative error with advantage by using simulation and analytic method. The second set of numbers show that without advantage.
+The absolute error with advantage of two methods is 0.001100972	, the relative error with advantage of the two methods is 0.001822134. The absolute error without advantage of two methods is 0.003012203 and the relative error without advantage of two methods is 0.004951937.
 
 ```{r}
 # different probabilities depend on pb
@@ -273,9 +285,6 @@ prob_with_seq[k] = apo[, sum(p), overall_outcome][1,2] %>% as.numeric()
 }
 ```
 
-```{r}
-prob_with_seq
-```
 The above sequence shows the probability of Braves winning with advantage for the $P_B$ from 0.5 to 0.9 by using analytic method.
 
 ```{r}
@@ -285,10 +294,11 @@ for(i in 1:41){
   prob_b[i] = 0.5 + 0.01 * (i - 1)
   prob_without_seq_2[i] = pnbinom(3, 4, prob_b[i])
 }
-prob_without_seq_2
 ```
 The above sequence shows the probability of Braves winning without advantage for the $P_B$ from 0.5 to 0.9 by using analytic method.
 
+## Question 4
+Does the difference in probabilities (with vs without home field advantage) depend on PB? (Generate a plot to answer this question.)
 ```{r}
 prob_b = c()
 for(i in 1:41){
@@ -306,6 +316,7 @@ ggplot(sum, aes(x = prob_b)) +
   theme_bw()
 ```
 The above figure shows how the difference of probability with and without advantage changes when the $P_B$ changes. The x axis represents the $P_B$ changes from 0.5 to 0.9, and the y axis represents the corresponding difference of probabilities with and without advantage. 
+
 ```{r}
 # different probabilities depend on advantage
 
@@ -335,11 +346,8 @@ prob_with_seq_a[k] = apo[, sum(p), overall_outcome][1,2] %>% as.numeric()
 }
 ```
 
-```{r}
-prob_with_seq_a
-```
-The above sequence of data shows the different probability with taking advantage into consideration when advantage from 1 to 1.8 with $P_B$ fixed to 0.55. The first element of this sequence is without advantage. 
-
+## Question 5
+Does the difference in probabilities (with vs without home field advantage) depend on the advantage factor? (The advantage factor in PBH and PBA is the 1.1 multiplier that results in a 10% increase for the home team. Generate a plot to answer this question.)
 ```{r}
 sum_a = data.frame(advantage, prob_with_seq_a)
 
