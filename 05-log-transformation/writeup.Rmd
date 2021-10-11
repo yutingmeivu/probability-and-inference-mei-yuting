@@ -1,0 +1,385 @@
+---
+title: "05-log-transformation"
+author: 'Yuting Mei'
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    number_sections: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE, cache=TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+```
+
+# Introduction
+
+## Questions
+
+### Part 1
+* For each distribution below, generate a figure of the PDF and CDF. Mark the mean and median in the figure.
+
+* For each distribution below, generate a figure of the PDF and CDF of the transformation Y = log(X) random variable. Mark the mean and median in the figure. You may use simulation or analytic methods in order find the PDF and CDF of the transformation.
+
+* For each of the distributions below, generate 1000 samples of size 100. For each sample, calculate the geometric and arithmetic mean. Generate a scatter plot of the geometic and arithmetic sample means. Add the line of identify as a reference line.
+
+* Generate a histogram of the difference between the arithmetic mean and the geometric mean.
+
+### Part 3
+What is the correct relationship between E[log(X)] and log(E[X])? Is one always larger? Equal? Explain your answer.
+
+# Method
+
+## Terminology
+
+__Probability density function(pdf)__
+<br>
+In probability theory, a probability density function (PDF), or density of a continuous random variable, is a function whose value at any given sample (or point) in the sample space (the set of possible values taken by the random variable) can be interpreted as providing a relative likelihood that the value of the random variable would be close to that sample.
+
+A probability density function is most commonly associated with absolutely continuous univariate distributions. A random variable {\displaystyle X}X has density {\displaystyle f_{X}}f_X, where {\displaystyle f_{X}}f_X is a non-negative Lebesgue-integrable function, if:
+$\Pr[a\leq X\leq b]=\int _{a}^{b}f_{X}(x)\,dx.$
+
+__Cumulative distribution function(cdf)__
+<br>
+In probability theory and statistics, the cumulative distribution function (CDF) of a real-valued random variable $X$, or just distribution function of $X$, evaluated at $x$, is the probability that $X$ will take a value less than or equal to $x$.
+
+The cumulative distribution function of a real-valued random variable $X$ is the function given by:
+$F_{X}(x)=\operatorname {P} (X\leq x)$
+where the right-hand side represents the probability that the random variable $X$ takes on a value less than or equal to $x$. 
+
+__Arithmetic mean__
+<br>
+In mathematics and statistics, the arithmetic mean, or simply the mean or the average (when the context is clear), is the sum of a collection of numbers divided by the count of numbers in the collection.
+
+Given a data set $X=\{x_{1},\ldots ,x_{n}\}$, the arithmetic mean (or mean or average), denoted $ {\bar {x}}$, is the mean of the n values $x_{1},x_{2},\ldots ,x_{n}$.
+
+The arithmetic mean is the most commonly used and readily understood measure of central tendency in a data set. In statistics, the term average refers to any of the measures of central tendency. The arithmetic mean of a set of observed data is defined as being equal to the sum of the numerical values of each and every observation, divided by the total number of observations. Symbolically, if we have a data set consisting of the values $a_{1},a_{2},\ldots ,a_{n}$, then the arithmetic mean $A$ is defined by the formula:
+$\displaystyle A={\frac {1}{n}}\sum _{i=1}^{n}a_{i}={\frac {a_{1}+a_{2}+\cdots +a_{n}}{n}}$
+
+__Geometric mean__
+<br>
+In mathematics, the geometric mean is a mean or average, which indicates the central tendency or typical value of a set of numbers by using the product of their values (as opposed to the arithmetic mean which uses their sum). The geometric mean is defined as the nth root of the product of n numbers, i.e., for a set of numbers x1, x2, ..., xn, the geometric mean is defined as
+$\left(\prod _{i=1}^{n}x_{i}\right)^{\frac {1}{n}}={\sqrt[{n}]{x_{1}x_{2}\cdots x_{n}}}$
+
+__Expected Value__
+<br>
+In probability theory, the expected value of a random variable $X$, often denoted $\displaystyle \operatorname {E} (X)$, $\operatorname {E} [X]$, or $\displaystyle EX$, is a generalization of the weighted average, and is intuitively the arithmetic mean of a large number of independent realizations of $X$. 
+
+If $X$ is a random variable with a probability density function of $f(x)$, then the expected value is defined as the Lebesgue integral
+$\operatorname {E} [X]=\int _{\mathbb {R} }xf(x)\,dx$,
+where the values on both sides are well defined or not well defined simultaneously.
+
+The expected value of a measurable function of $X$, $g(X)$, given that $X$ has a probability density function $f(x)$, is given by the inner product of $f$ and $g$:
+$\operatorname {E} [g(X)]=\int _{\mathbb {R} }g(x)f(x)\,dx.$
+This formula also holds in multidimensional case, when $g$ is a function of several random variables, and $f$ is their joint density.
+
+__Gamma Distribution__
+<br>
+In probability theory and statistics, the gamma distribution is a two-parameter family of continuous probability distributions. The exponential distribution, Erlang distribution, and chi-square distribution are special cases of the gamma distribution. There are two different parameterizations in common use:
+With a shape parameter k and a scale parameter θ.
+With a shape parameter $α = k$ and an inverse scale parameter $β = 1/θ$, called a rate parameter.
+In each of these forms, both parameters are positive real numbers.
+
+* pdf
+A random variable X that is gamma-distributed with shape α and rate β is denote:
+$X\sim\Gamma(\alpha,\beta) \equiv Gamma(\alpha,\beta)$
+The corresponding probability density function in thr shape-rate parametrization is:
+$f(x; \alpha, \beta) =\frac{\beta ^\alpha x^{(\alpha -1)}e^{(-\beta x)}}{\Gamma(\alpha)}$
+for $x > 0 , \alpha , \beta > 0$, 
+where $\Gamma(\alpha)$ is the gamma function. For all positive integers, $\Gamma(\alpha) = (a-1)!$
+
+*cdf
+The cumulative distribution function is the regularized gamma function:
+$F(x;\alpha,\beta) = \int_{0}^{x}\ f(u;\alpha,\beta)\,du = \frac{\gamma(\alpha, \beta x)}{\Gamma(\alpha)}$,
+where $\gamma(\alpha, \beta x)$ is the lower incomplete gamma function.
+
+__Log Normal Distribution__
+<br>
+In probability theory, a log-normal (or lognormal) distribution is a continuous probability distribution of a random variable whose logarithm is normally distributed. Thus, if the random variable X is log-normally distributed, then Y = ln(X) has a normal distribution.
+
+Let Z be a standard normal variable, and let $\mu$  and $\sigma >0$ be two real numbers. Then, the distribution of the random variable:
+$X=e^{\mu +\sigma Z}$
+is called the log-normal distribution with parameters $\mu$ and $\sigma$.
+
+*pdf
+A positive random variable X is log-normally distributed (i.e., $X\sim \operatorname {Lognormal} (\mu _{x},\sigma _{x}^{2})$, if the natural logarithm of X is normally distributed with mean $\mu$ and variance $\sigma ^{2}$:
+
+$\ln(X)\sim {\mathcal {N}}(\mu ,\sigma ^{2})$
+Let $\Phi$ and $\varphi$  be respectively the cumulative probability distribution function and the probability density function of the N(0,1) distribution, then we have that
+$\begin{aligned}f_{X}(x)&={\frac {\rm {d}}{{\rm {d}}x}}\Pr(X\leq x)={\frac {\rm {d}}{{\rm {d}}x}}\Pr(\ln X\leq \ln x)={\frac {\rm {d}}{{\rm {d}}x}}\Phi \left({\frac {\ln x-\mu }{\sigma }}\right)\\[6pt]&=\varphi \left({\frac {\ln x-\mu }{\sigma }}\right){\frac {\rm {d}}{{\rm {d}}x}}\left({\frac {\ln x-\mu }{\sigma }}\right)=\varphi \left({\frac {\ln x-\mu }{\sigma }}\right){\frac {1}{\sigma x}}\\[6pt]&={\frac {1}{x\sigma {\sqrt {2\pi \,}}}}\exp \left(-{\frac {(\ln x-\mu )^{2}}{2\sigma ^{2}}}\right).\end{aligned}$
+
+*cdf
+The cumulative distribution function is
+$F_{X}(x)=\Phi \left({\frac {(\ln x)-\mu }{\sigma }}\right)$
+where $\Phi$ is the cumulative distribution function of the standard normal distribution (i.e., N(0,1)).
+
+__Continuous uniform distribution__
+<br>
+In probability theory and statistics, the continuous uniform distribution or rectangular distribution is a family of symmetric probability distributions. The distribution describes an experiment where there is an arbitrary outcome that lies between certain bounds.
+
+* pdf
+The probability density function of the continuous uniform distribution is:
+$f(x)={\begin{cases}{\frac {1}{b-a}}&\mathrm {for} \ a\leq x\leq b,\\[8pt]0&\mathrm {for} \ x<a\ \mathrm {or} \ x>b\end{cases}}$
+The values of f(x) at the two boundaries a and b are usually unimportant because they do not alter the values of the integrals of $f(x) dx$ over any interval, nor of $x f(x) dx$ or any higher moment. 
+
+* cdf
+The cumulative distribution function is:
+$F(x)={\begin{cases}0&{\text{for }}x<a\\[8pt]{\frac {x-a}{b-a}}&{\text{for }}a\leq x\leq b\\[8pt]1&{\text{for }}x>b\end{cases}}$
+
+__Taylor Series__
+<br>
+In mathematics, the Taylor series of a function is an infinite sum of terms that are expressed in terms of the function's derivatives at a single point. For most common functions, the function and the sum of its Taylor series are equal near this point. 
+
+The Taylor series of a real or complex-valued function f(x) that is infinitely differentiable at a real or complex number a is the power series
+$f(a)+{\frac {f'(a)}{1!}}(x-a)+{\frac {f''(a)}{2!}}(x-a)^{2}+{\frac {f'''(a)}{3!}}(x-a)^{3}+\cdots ,$
+where n! denotes the factorial of n. 
+
+The exponential function $e^{x}$ (with base e) has Maclaurin series
+
+$e^{x}=\sum _{n=0}^{\infty }{\frac {x^{n}}{n!}}=1+x+{\frac {x^{2}}{2!}}+{\frac {x^{3}}{3!}}+\cdots $.
+It converges for all x.
+
+# Results
+__Distribution 1__
+<br>
+X∼GAMMA(shape=3,scale=1)
+```{r}
+
+n = 100
+sum = c()
+
+arithmetic = c()
+geometric = c()
+x_ = seq(0.1,20, by = 0.1)
+sum$pdf_g = dgamma(x_, shape = 3, scale = 1)
+sum$cdf_g = pgamma(x_, shape = 3, scale = 1)
+sum$log_pdf = dgamma(x_, shape = 3, scale = 1) %>% log()
+sum$log_cdf = pgamma(x_, shape = 3, scale = 1) %>% log()
+sum = data.frame(sum)
+
+# plot pdf, median, mean of gamma distribution and gamma distribution of x after log trnasformation
+plot_ = function(df){
+  for(i in 1:length(colnames(df))){
+  if(colnames(df)[i] %>%
+  grep(pattern = "log") %>%
+  length()){
+    print(df %>%
+    ggplot(aes(x = x_, y = df[, i])) +
+    geom_line() +
+      geom_hline(aes(yintercept = mean(df[, i], na.rm = T)),
+          colour = "gray", linetype ="longdash", size = .8) +
+      geom_hline(aes(yintercept = median(df[, i], na.rm = T)),
+          colour = "#B4DAD8", linetype ="longdash", size = .8) +
+      labs(x = "log transformation of x") +
+      geom_text(x = max(x_)- 5, y = max(df[, i]), label = sprintf("mean = %s, median = %s", mean(df[, i], na.rm = T) %>% round(., 3), median(df[, i], na.rm = T) %>% round(., 3))))
+  }
+  else{
+    print(df %>%
+    ggplot(aes(x = x_, y = df[, i])) +
+    geom_line() + 
+      geom_hline(aes(yintercept = mean(df[, i], na.rm = T)),
+          colour = "gray", linetype ="longdash", size = .8) +
+      geom_hline(aes(yintercept = median(df[, i], na.rm = T)),
+          colour = "#B4DAD8", linetype ="longdash", size = .8) +
+      labs(x = "x") +
+      geom_text(x =max(x_)-5, y = max(df[, i]), label = sprintf("mean = %s, median = %s", mean(df[, i], na.rm = T) %>% round(., 3), median(df[, i], na.rm = T) %>% round(., 3)))
+    )
+  }
+  }
+}
+
+plot_(sum)
+
+# generate 1000 samples of size 100. For each sample, calculate the geometric and arithmetic mean. Generate a scatter plot of the geometic and arithmetic sample means. 
+for(i in 1:1000){
+  x <- rgamma(n, shape = 3, scale = 1)
+arithmetic[i] = mean(x)
+geometric[i] = (prod(x))^(1/100)
+}
+sum_mean = data.frame(arithmetic, geometric)
+sum_mean %>% ggplot(aes(x = arithmetic, y = geometric)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1)
+
+# Generate a histogram of the difference between the arithmetic mean and the geometric mean.
+sum_mean %>%
+  summarise(dif = arithmetic - geometric) %>%
+  ggplot(aes(x = dif)) +
+  geom_histogram(color = "#A98CB8", alpha = 0.8, fill = "#D1B5E1") +
+  labs(x = "difference of arithmetic and geometric mean", 
+       y = "frequency")
+
+
+# relationship between E[log(X)] and log(E[X])? 
+# E[log(x)]
+integrand <- function(x) {log(x)*(dgamma(x, shape = 3, scale = 1))}
+integrate(integrand, lower = 0, upper = Inf)
+
+#log([E(x)])
+integrand2 <- function(x) {x*(dgamma(x, shape = 3, scale = 1))}
+integrate(integrand2, lower = 0, upper = Inf)[[1]] %>% as.numeric() %>% log()
+
+# exp_of_logx = c()
+# log_of_expx = c()
+# for(i in 1:1000){
+#   x <- rgamma(n, shape = 3, scale = 1)
+# exp_of_logx[i] = x %>% log() %>% mean()
+# log_of_expx[i] = x %>% mean() %>% log()
+# }
+# 
+# data.frame(exp_of_logx, log_of_expx) %>%
+#   pivot_longer(c("exp_of_logx", "log_of_expx"), names_to = "type", values_to = "expectation") %>%
+#   ggplot(aes(x = c(seq(1, 1000), seq(1, 1000)), y = expectation, color = type)) +
+#   geom_point()
+# 
+# data.frame(exp_of_logx, log_of_expx) %>%
+#   summarise(difference = exp_of_logx - log_of_expx) %>%
+#   ggplot(aes(x = difference)) +
+#   geom_histogram()
+```
+For random variable X, the first and the third figure show the pdf of x and Y = log(x) of Gamma distribution. The x axises include the sequence of x from 0 to 20, the y axises show the likelihood of corresponding X and X after log transformation. The second the the fourth figure show the cdf of X and Y = log(x) of Gamma distribution. The x axises are both same as the corresbonding figures of the first and the third one, the y axises show the probability that X will take a value less or equal to x and that after log transformation. The grey dash line of those four figures represents the mean, the dash line with color #B4DAD8 represents the median of each figure. The fifth figure shows the different means of 1000 samples of size 100. The x axis is the arithmetic mean and the y axis is the geometric mean. In this figure, the arithmetic mean is always larger than geometric mean, and they have a positive linear relationship. The sixth figure shows the histogram of difference of arithmetic and geometric mean. The x axis is the difference of two knids of means, the y axis shows the frequency of the number of differences appear. It looks like a normal distribution. The two numbers show the E[log(x)] and log[E(x)], in this case, E[log(x)] is smaller than log[E(x)].
+
+__Distribution 2__
+<br>
+X∼LOG NORMAL(μ=−1,σ=1)
+```{r}
+sum_ln = c()
+sum_ln$pdf_g = dlnorm(x_, meanlog = -1, sdlog = 1)
+sum_ln$cdf_g = plnorm(x_, meanlog = -1, sdlog = 1)
+sum_ln$log_pdf = dlnorm(x_, meanlog = -1, sdlog = 1, log =T)
+sum_ln$log_cdf = plnorm(x_, meanlog = -1, sdlog = 1, log =T)
+sum_ln = data.frame(sum_ln)
+
+plot_(sum_ln)
+
+for(i in 1:1000){
+  x = rlnorm(n, meanlog = -1, sdlog = 1)
+arithmetic[i] = x %>% mean()
+geometric[i] = (prod(x))^(1/100)
+}
+sum_mean_ln = data.frame(arithmetic, geometric)
+sum_mean_ln %>% ggplot(aes(x = arithmetic, y = geometric)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1)
+
+# Generate a histogram of the difference between the arithmetic mean and the geometric mean.
+sum_mean_ln %>%
+  summarise(dif = arithmetic - geometric) %>%
+  ggplot(aes(x = dif)) +
+  geom_histogram(color = "#8C9DB8", alpha = 0.8, fill = "#A8BEE1") +
+  labs(x = "difference of arithmetic and geometric mean", 
+       y = "frequency")
+
+# E[log(x)]
+integrand <- function(x) {log(x)*(dlnorm(x, meanlog = -1, sdlog = 1))}
+integrate(integrand, lower = 0, upper = Inf)
+
+#log([E(x)])
+integrand2 <- function(x) {x*(dlnorm(x, meanlog = -1, sdlog = 1))}
+integrate(integrand2, lower = 0, upper = Inf)[[1]] %>% as.numeric() %>% log()
+
+# exp_of_logx = c()
+# log_of_expx = c()
+# for(i in 1:1000){
+#   x = rlnorm(n, meanlog = -1, sdlog = 1)
+# exp_of_logx[i] = x %>% log() %>% mean()
+# log_of_expx[i] = x %>% mean() %>% log()
+# }
+# data.frame(exp_of_logx, log_of_expx) %>%
+#   pivot_longer(c("exp_of_logx", "log_of_expx"), names_to = "type", values_to = "expectation") %>%
+#   ggplot(aes(x = c(seq(1, 1000), seq(1, 1000)), y = expectation, color = type)) +
+#   geom_point()
+# 
+# data.frame(exp_of_logx, log_of_expx) %>%
+#   summarise(difference = exp_of_logx - log_of_expx) %>%
+#   ggplot(aes(x = difference)) +
+#   geom_histogram()
+```
+The six figures have the same meaning like the above one but are all about log normal distribution. For the fifth figure, it also looks like that arithmetic mean are all greater than geometric mean, and they have a positive linear relationship between each other. For the sixth figure, the distribution of the difference looks a bit skewed. The two numbers have the same conlusion as the above one.
+
+__Distribution 3__
+<br>
+X∼UNIFORM(0,12)
+```{r}
+sum_uni = c()
+sum_uni$pdf_g = dunif(x_, min = 0, max = 12)
+sum_uni$cdf_g = punif(x_, min = 0, max = 12)
+sum_uni$log_pdf = dunif(x_, min = 0, max = 12, log = T)
+sum_uni$log_cdf = punif(x_, min = 0, max = 12, log = T)
+sum_uni = data.frame(sum_uni)
+
+plot_(sum_uni)
+
+for(i in 1:1000){
+  x = runif(n, min = 0, max = 121)
+arithmetic[i] = x %>% mean()
+geometric[i] = (prod(x))^(1/100)
+}
+sum_mean_uni = data.frame(arithmetic, geometric)
+sum_mean_uni %>% ggplot(aes(x = arithmetic, y = geometric)) + geom_point() +
+  geom_abline(intercept = 0, slope = 1)
+
+# Generate a histogram of the difference between the arithmetic mean and the geometric mean.
+sum_mean_uni %>%
+  summarise(dif = arithmetic - geometric) %>%
+  ggplot(aes(x = dif)) +
+  geom_histogram(color = "#C9819A", alpha = 0.8, fill = "#E797B3") +
+  labs(x = "difference of arithmetic and geometric mean", 
+       y = "frequency")
+
+# E[log(x)]
+integrand <- function(x) {log(x)*(dunif(x, min = 0, max = 12))}
+integrate(integrand, lower = 0, upper = Inf)
+
+#log([E(x)])
+integrand2 <- function(x) {x*(dunif(x, min = 0, max = 12))}
+integrate(integrand2, lower = 0, upper = Inf)[[1]] %>% as.numeric() %>% log()
+
+# exp_of_logx = c()
+# log_of_expx = c()
+# for(i in 1:1000){
+#   x = runif(n, min = 0, max = 121)
+# exp_of_logx[i] = x %>% log() %>% mean()
+# log_of_expx[i] = x %>% mean() %>% log()
+# }
+# data.frame(exp_of_logx, log_of_expx) %>%
+#   pivot_longer(c("exp_of_logx", "log_of_expx"), names_to = "type", values_to = "expectation") %>%
+#   ggplot(aes(x = c(seq(1, 1000), seq(1, 1000)), y = expectation, color = type)) +
+#   geom_point()
+# 
+# data.frame(exp_of_logx, log_of_expx) %>%
+#   summarise(difference = exp_of_logx - log_of_expx) %>%
+#   ggplot(aes(x = difference)) +
+#   geom_histogram()
+```
+The six figures have the same meaning like the above one but are all about uniform distribution. The fifth figures and sixth figure have the same conclusion as the fist set of figures. And the two numbers have the same conclusion as the above two sets of numbers.
+
+# Conclusion
+
+## Prove of the relationship between E[log(X)] and log(E[X])
+according the Taylor Series, we have $e^x \geq 1+x$.
+<br>
+$E(e^Y) = E(e^{Y-E(Y)} \cdot e^{E(Y)})$
+<br>
+because $e^{EY}$ is a number, so the above formula is equal to
+<br>
+$e^{E(Y)}E(e^{Y-E(Y)}) \geq e^{E(Y)}E(1+Y-E(Y))\\=e^{E(Y)}(E(1)+E(Y)-E(Y))\\=e^{E(Y)}$
+<br>
+Now we get $e^{E(Y)}\leq E(e^Y)$
+<br>
+$e^{E(lnx)}\leq E(e^{lnx})\\\qquad\ \ =E(x)$
+<br>
+Finally we get$E[log(x)]\leq log[E(X)]$,
+<br>
+where log base 2.
+
+## Conclusions in summary
+* The arithemtic mean is bigger than geometric mean in those cases.
+* $E[log(X)] \leq log(E[X])$ of distributions
