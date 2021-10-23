@@ -1,0 +1,264 @@
+---
+title: "06-order-statistics"
+author: 'Yuting Mei'
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    number_sections: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE, cache=TRUE)
+```
+
+```{r}
+library(dplyr)
+```
+
+# Introduction
+
+## Background
+The median is an important quantity in data analysis. It represents the middle value of the data distribution. Estimates of the median, however, have a degree of uncertainty because (a) the estimates are calculated from a finite sample and (b) the data distribution of the underlying data is generally unknown. One important roles of a data scientist is to quantify and to communicate the degree of uncertainty in his or her data analysis.
+
+# Method
+
+## Terminology
+
+__Probability density function(pdf)__
+<br>
+In probability theory, a probability density function (PDF), or density of a continuous random variable, is a function whose value at any given sample (or point) in the sample space (the set of possible values taken by the random variable) can be interpreted as providing a relative likelihood that the value of the random variable would be close to that sample.
+
+A probability density function is most commonly associated with absolutely continuous univariate distributions. A random variable {\displaystyle X}X has density {\displaystyle f_{X}}f_X, where {\displaystyle f_{X}}f_X is a non-negative Lebesgue-integrable function, if:
+$\Pr[a\leq X\leq b]=\int _{a}^{b}f_{X}(x)\,dx.$
+
+__Cumulative distribution function(cdf)__
+<br>
+In probability theory and statistics, the cumulative distribution function (CDF) of a real-valued random variable $X$, or just distribution function of $X$, evaluated at $x$, is the probability that $X$ will take a value less than or equal to $x$.
+
+The cumulative distribution function of a real-valued random variable $X$ is the function given by:
+$F_{X}(x)=\operatorname {P} (X\leq x)$
+where the right-hand side represents the probability that the random variable $X$ takes on a value less than or equal to $x$. 
+
+__Quantile function(Inverse cdf)__
+<br>
+In probability and statistics, the quantile function, associated with a probability distribution of a random variable, specifies the value of the random variable such that the probability of the variable being less than or equal to that value equals the given probability. 
+
+With reference to a continuous and strictly monotonic distribution function, for example the cumulative distribution function {\displaystyle F_{X}\colon R\to [0,1]}{\displaystyle F_{X}\colon R\to [0,1]} of a random variable X, the quantile function Q returns a threshold value x below which random draws from the given c.d.f. would fall p percent of the time.
+
+In terms of the distribution function F, the quantile function Q returns the value x such that
+
+$F_{X}(x):=\Pr(X\leq x)=p.\,$
+
+__Empirical Distribution Function Definition__
+<br>
+An empirical cumulative distribution function (also called the empirical distribution function, ECDF, or just EDF) and a cumulative distribution function are basically the same thing: they are both probability models for data. However, while a CDF is a hypothetical model of a distribution, the ECDF models empirical (i.e. observed) data. To put this another way, the ECDF is the probability distribution you would get if you sampled from your sample, instead of the population. Let’s say you have a set of experimental (observed) data x1, x2 …,xn. The EDF will give you the fraction of sample observations less than or equal to a particular value of x.
+
+__Standard Normal Distribution__
+<br>
+The standard normal distribution, also called the z-distribution, is a special normal distribution where the mean is 0 and the standard deviation is 1.
+
+In probability theory, a normal (or Gaussian or Gauss or Laplace–Gauss) distribution is a type of continuous probability distribution for a real-valued random variable. The general form of its probability density function is:
+
+$f(x)={\frac {1}{\sigma {\sqrt {2\pi }}}}e^{-{\frac {1}{2}}\left({\frac {x-\mu }{\sigma }}\right)^{2}}$
+
+The parameter $\mu$ is the mean or expectation of the distribution (and also its median and mode), while the parameter $\sigma$ is its standard deviation.
+
+__Q-Q plot__
+<br>
+In statistics, a Q–Q (quantile-quantile) plot is a probability plot, which is a graphical method for comparing two probability distributions by plotting their quantiles against each other.[1] First, the set of intervals for the quantiles is chosen. A point (x, y) on the plot corresponds to one of the quantiles of the second distribution (y-coordinate) plotted against the same quantile of the first distribution (x-coordinate). Thus the line is a parametric curve with the parameter which is the number of the interval for the quantile.
+
+If the two distributions being compared are similar, the points in the Q–Q plot will approximately lie on the line y = x.
+
+# Result
+
+Q: Begin with the median from a sample of N=200 from the standard normal distribution. Write an R function that is the density function for the median in this sample. Note that the 100th order statistic is approximately the median, and use the order statistic formula discussed in class. Generate a plot of the function.
+```{r}
+dorder = function(x){
+k = 100
+n = 200
+  k*
+  choose(n,k)*
+  (pnorm(x, 0, 1))^(k-1)*
+  (1-pnorm(x, 0, 1))^(n-k)*
+  dnorm(x, 0, 1)
+
+}
+
+curve(dorder(x),
+      -1,
+      1, 
+      xlab = "Median of standard normal distribution",
+      ylab = "Density")
+
+```
+The x axis of above figure is the possible values of median from a sample of N=200 from the standard normal distribution, the y axis is the density corresponding to the median.
+
+Q: Write an R function that is the probability function for the median in this sample. Use the order statistic formula discussed in class. Generate a plot of the function.
+```{r}
+porder <- function(x){
+  k = 100
+  n = 200
+  pbinom(k-1, n, pnorm(x, 0, 1), lower.tail = FALSE)
+}
+curve(porder(x),
+      -1,
+      1, 
+      xlab = "Median of standard normal distribution",
+      ylab = "Probability")
+```
+The x axis of above figure is the possible values of median value from a sample of N=200 from the standard normal distribution, the y axis is the probability that smaller than or equals to that median.
+
+Q: Write an R function that is the quantile function for the median in this sample. (You have several options for how to write this function.) Generate a plot of the function.
+```{r}
+qorder = function(x){
+  ls = data.frame(x_var = seq(-1,1, by = 0.01)) %>%
+    mutate(p = porder(x_var))
+  q = approxfun(ls$p, ls$x_var)
+  return(q(x))
+}
+
+curve(qorder(x),
+      0.00001, 
+      0.99999,
+      xlab = "quantile of the median of standard normal distribution",
+      ylab = "median")
+```
+The x axis of above figure is the quantile of the distribution of median of a standard normal distribution, the y axis the corresponding to the median.
+
+Q: Simulate the sampling distribution for the median. Create a plot of the empirical CDF (ECDF). Overlay the plot of the ECDF with a plot of the CDF.
+```{r}
+norm_mean = replicate(
+  1000,
+  rnorm(200, mean = 0, sd = 1) %>% sort %>% `[` (100)
+)
+
+plot(ecdf(norm_mean), do.points = F, col = "green")
+curve(porder(x), add = T, lwd = 3, col = "blue")
+legend(
+  "topleft",
+  c("ECDF", "CDF"),
+  lwd = 3,
+  col = c("green", "blue"), 
+  bty = "n"
+)
+```
+The x axis of the above figure shows the samples of the median of a standard normal distribution. The y axis shows the estimate of the cumulative distribution function of samples(green one) and the cumulative distribution function of samples(blue one).
+
+Q: Using the simulated sampling distribution from the previous question, create a histogram (on the density scale). Overlay the histogram with a plot of the density function.
+```{r}
+hist(norm_mean, freq = FALSE, main = "The distribution of the mean of standard normal distribution", breaks = 100)
+curve(dorder(x), add = T, lwd = 3, col = "blue")
+```
+The x axis above shows the samples of the median of a standard normal distribution. The y aixs shows the density of different possible values of samples. 
+
+Q: For the assigment, generate a QQ plot for the simulated data of the median relative to the known sampling distribution of the median.
+
+Does the simulated data agree with the theoretical sampling distribution?
+```{r}
+q_candidate <- qorder
+
+x <- q_candidate((1:200)/200)
+y <- quantile(norm_mean, probs = (1:200)/200)
+
+plot(x,y, asp = 1, xlab = "Theoretical quantile", ylab = "Sample quantile")
+abline(0,1)
+```
+The x axis above shows the known sampling distribution of the median, y axis shows the simulated data of the median. If they are agree with each other, then the points tend to fall on the line y = x. The result shows that they have the similar distribution.
+
+Q: Modify the dorder, porder, and qorder functions so that the functions take a new parameter k (for the kt**h order statistic) so that the functions will work for any order statistic and not just the median.
+```{r}
+dorder = function(x, k){
+n = 200
+  k*
+  choose(n,k)*
+  (pnorm(x, 0, 1))^(k-1)*
+  (1-pnorm(x, 0, 1))^(n-k)*
+  dnorm(x, 0, 1)
+
+}
+
+porder <- function(x, k){
+  n = 200
+  pbinom(k-1, n, pnorm(x, 0, 1), lower.tail = FALSE)
+}
+
+qorder = function(x, k){
+  ls = data.frame(x_var = seq(-1,1, by = 0.01)) %>%
+    mutate(p = porder(x_var, k))
+  q = approxfun(ls$p, ls$x_var)
+  return(q(x))
+}
+```
+
+Q: Generate the QQ plot for simulated data from the sampling distribution of the sample max and the theoretical largest order statistic distribution.
+```{r}
+qorder = function(x, k, x_var){
+  ls = data.frame(x_var) %>%
+    mutate(p = porder(x_var, k))
+  q = approxfun(ls$p, ls$x_var)
+  return(q(x))
+}
+norm_max = replicate(
+  1000,
+  rnorm(200, mean = 0, sd = 1) %>% sort %>% `[` (200)
+)
+
+x <- qorder((1:200)/200, k = 200, x_var = seq(0,5, by = 0.01))
+y <- quantile(norm_max, probs = (1:200)/200)
+
+plot(x,y, asp = 1, xlab = "Theoretical quantile", ylab = "Sample quantile")
+abline(0,1)
+```
+The x axis above shows the known sampling distribution of the maximum, y axis shows the simulated data of the maximum. The result shows that they have the similar distribution.
+
+Q: Modify the dorder, porder, and qorder functions so that the functions take new parameters dist and ... so that the functions will work for any continuous distribution that has d and p functions defined in R.
+```{r}
+`%|%` = function(a,b){paste0(a,b)}
+
+dorder = function(x, k, n, dist, ...){
+  F = eval(parse(text = "p" %|% dist))
+  f = eval(parse(text = "d" %|% dist))
+  k*
+  choose(n,k)*
+  (F(x, ...))^(k-1)*
+  (1-F(x, ...))^(n-k)*
+  f(x, ...)
+
+}
+
+porder <- function(x, k, n, dist, ...){
+  F =eval(parse(text = "p" %|% dist))
+  f = eval(parse(text = "d" %|% dist))
+  pbinom(k-1, n, F(x, ...), lower.tail = FALSE)
+}
+
+qorder = function(x, x_var, k, n, dist, ...){
+  ls = data.frame(x_var) %>%
+    mutate(p = porder(x_var, k, n, dist, ...))
+  q = approxfun(ls$p, ls$x_var)
+  return(q(x))
+}
+```
+
+Q: Use the newly modified functions to plot the probability and density functions for the sample min (N=200).
+```{r}
+curve(dorder(x, 1, 200, dist = "norm", mean = 0, sd = 1),
+      -5, 
+      0,
+      xlab = "Min of standard normal distribution",
+      ylab = "Density")
+curve(porder(x, 1, 200, dist = "norm", mean = 0, sd = 1),
+      -5, 
+      0,
+      xlab = "Min of standard normal distribution",
+      ylab = "Density")
+```
+The x axis of the first figure is the possible values of minimum value from a sample of N=200 from the standard normal distribution, the y axis is the density corresponding to the minimum. The x axis of the second figure is the possible values of minimum from a sample of N=200 from the standard normal distribution, the y axis is the probability that smaller than or equals to that minimum.
+
+# Conclusion
+
+- the simulated data of the $k^{th}$ of a distribution have the similar distribution of the known sampling distribution of the $k^{th}$ of the distribution.
