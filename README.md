@@ -16,4 +16,6 @@ a GitHub repo for 5620 Probability and Statistical Inference
 
 05-log-transformation: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/05-log-transformation
 
+06-order-statistics: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/06-order-statistics
+
 ec1-birthday-problem: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/ec1-birthday-problem
