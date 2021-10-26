@@ -115,6 +115,7 @@ A positive random variable X is log-normally distributed (i.e., $X\sim \operator
 
 $\ln(X)\sim {\mathcal {N}}(\mu ,\sigma ^{2})$
 Let $\Phi$ and $\varphi$  be respectively the cumulative probability distribution function and the probability density function of the N(0,1) distribution, then we have that
+<br>
 $\begin{aligned}f_{X}(x)&={\frac {\rm {d}}{{\rm {d}}x}}\Pr(X\leq x)={\frac {\rm {d}}{{\rm {d}}x}}\Pr(\ln X\leq \ln x)={\frac {\rm {d}}{{\rm {d}}x}}\Phi \left({\frac {\ln x-\mu }{\sigma }}\right)\\[6pt]&=\varphi \left({\frac {\ln x-\mu }{\sigma }}\right){\frac {\rm {d}}{{\rm {d}}x}}\left({\frac {\ln x-\mu }{\sigma }}\right)=\varphi \left({\frac {\ln x-\mu }{\sigma }}\right){\frac {1}{\sigma x}}\\[6pt]&={\frac {1}{x\sigma {\sqrt {2\pi \,}}}}\exp \left(-{\frac {(\ln x-\mu )^{2}}{2\sigma ^{2}}}\right).\end{aligned}$
 
 *cdf
@@ -144,8 +145,9 @@ $f(a)+{\frac {f'(a)}{1!}}(x-a)+{\frac {f''(a)}{2!}}(x-a)^{2}+{\frac {f'''(a)}{3!
 where n! denotes the factorial of n. 
 
 The exponential function $e^{x}$ (with base e) has Maclaurin series
-
-$e^{x}=\sum _{n=0}^{\infty }{\frac {x^{n}}{n!}}=1+x+{\frac {x^{2}}{2!}}+{\frac {x^{3}}{3!}}+\cdots $.
+<br>
+$e^{x}=\sum _{n=0}^{\infty }{\frac {x^{n}}{n!}=1+x+{\frac {x^{2}}{2!}}+{\frac {x^{3}}{3!}}+\cdots }$
+<br>
 It converges for all x.
 
 # Results
@@ -162,42 +164,49 @@ geometric = c()
 x_ = seq(0.1,20, by = 0.1)
 sum$pdf_g = dgamma(x_, shape = 3, scale = 1)
 sum$cdf_g = pgamma(x_, shape = 3, scale = 1)
-sum$log_pdf = dgamma(x_, shape = 3, scale = 1) %>% log()
-sum$log_cdf = pgamma(x_, shape = 3, scale = 1) %>% log()
+log_pdf = rgamma(1000, shape = 3, scale = 1) %>% log()
 sum = data.frame(sum)
 
-# plot pdf, median, mean of gamma distribution and gamma distribution of x after log trnasformation
-plot_ = function(df){
+l = c("Gamma Distribution", "Log Normal Distribution", "Uniform Distribution")
+
+
+shape = 3
+scale = 1
+mean = shape * scale
+median = qgamma(.5, shape = 3, scale = 1) %>% round(., 3)
+
+# plot pdf, median, mean of gamma distribution of x
+plot_ = function(df, j){
   for(i in 1:length(colnames(df))){
-  if(colnames(df)[i] %>%
-  grep(pattern = "log") %>%
-  length()){
-    print(df %>%
-    ggplot(aes(x = x_, y = df[, i])) +
-    geom_line() +
-      geom_hline(aes(yintercept = mean(df[, i], na.rm = T)),
-          colour = "gray", linetype ="longdash", size = .8) +
-      geom_hline(aes(yintercept = median(df[, i], na.rm = T)),
-          colour = "#B4DAD8", linetype ="longdash", size = .8) +
-      labs(x = "log transformation of x") +
-      geom_text(x = max(x_)- 5, y = max(df[, i]), label = sprintf("mean = %s, median = %s", mean(df[, i], na.rm = T) %>% round(., 3), median(df[, i], na.rm = T) %>% round(., 3))))
-  }
-  else{
     print(df %>%
     ggplot(aes(x = x_, y = df[, i])) +
     geom_line() + 
-      geom_hline(aes(yintercept = mean(df[, i], na.rm = T)),
-          colour = "gray", linetype ="longdash", size = .8) +
-      geom_hline(aes(yintercept = median(df[, i], na.rm = T)),
-          colour = "#B4DAD8", linetype ="longdash", size = .8) +
-      labs(x = "x") +
-      geom_text(x =max(x_)-5, y = max(df[, i]), label = sprintf("mean = %s, median = %s", mean(df[, i], na.rm = T) %>% round(., 3), median(df[, i], na.rm = T) %>% round(., 3)))
+      geom_vline(aes(xintercept = mean, colour = "mean_"),
+           linetype ="longdash", size = .8) +
+      geom_vline(aes(xintercept = median, colour = "median_"),
+          linetype ="longdash", size = .8) +
+      labs(x = "x", title = sprintf("%s's %s", l[j], {{colnames(df)[i] %>% str_split(., pattern = "_") %>% unlist() %>% '['(1)}})) +
+      geom_text(x =max(x_)-5, y = max(df[, i]), label = sprintf("mean = %s, median = %s", mean,median)) +
+      scale_color_manual(values = c(mean_ = "gray", median_ = "#B4DAD8"))
     )
-  }
   }
 }
 
-plot_(sum)
+plot_(sum,1)
+
+
+# plot pdf, median, mean of gamma distribution of x after log trnasformation
+plot(density(log_pdf), type = "l", main = "Log trasformation of Gamma Distribution's CDF")
+abline(v = mean(log_pdf), col = "grey")
+abline(v = median(log_pdf), col = "green")
+legend("topright", c("mean", "median"), col = c("grey", "green"),lty= c(1,1))
+
+plot(ecdf(log_pdf), main = "Log trasformation of Gamma Distribution's PDF")
+abline(v = mean(log_pdf), col = "grey")
+abline(v = median(log_pdf), col = "green")
+legend("topright", c("mean", "median"), col = c("grey", "green"),lty= c(1,1))
+
+
 
 # generate 1000 samples of size 100. For each sample, calculate the geometric and arithmetic mean. Generate a scatter plot of the geometic and arithmetic sample means. 
 for(i in 1:1000){
@@ -226,24 +235,6 @@ integrate(integrand, lower = 0, upper = Inf)
 #log([E(x)])
 integrand2 <- function(x) {x*(dgamma(x, shape = 3, scale = 1))}
 integrate(integrand2, lower = 0, upper = Inf)[[1]] %>% as.numeric() %>% log()
-
-# exp_of_logx = c()
-# log_of_expx = c()
-# for(i in 1:1000){
-#   x <- rgamma(n, shape = 3, scale = 1)
-# exp_of_logx[i] = x %>% log() %>% mean()
-# log_of_expx[i] = x %>% mean() %>% log()
-# }
-# 
-# data.frame(exp_of_logx, log_of_expx) %>%
-#   pivot_longer(c("exp_of_logx", "log_of_expx"), names_to = "type", values_to = "expectation") %>%
-#   ggplot(aes(x = c(seq(1, 1000), seq(1, 1000)), y = expectation, color = type)) +
-#   geom_point()
-# 
-# data.frame(exp_of_logx, log_of_expx) %>%
-#   summarise(difference = exp_of_logx - log_of_expx) %>%
-#   ggplot(aes(x = difference)) +
-#   geom_histogram()
 ```
 For random variable X, the first and the third figure show the pdf of x and Y = log(x) of Gamma distribution. The x axises include the sequence of x from 0 to 20, the y axises show the likelihood of corresponding X and X after log transformation. The second the the fourth figure show the cdf of X and Y = log(x) of Gamma distribution. The x axises are both same as the corresbonding figures of the first and the third one, the y axises show the probability that X will take a value less or equal to x and that after log transformation. The grey dash line of those four figures represents the mean, the dash line with color #B4DAD8 represents the median of each figure. The fifth figure shows the different means of 1000 samples of size 100. The x axis is the arithmetic mean and the y axis is the geometric mean. In this figure, the arithmetic mean is always larger than geometric mean, and they have a positive linear relationship. The sixth figure shows the histogram of difference of arithmetic and geometric mean. The x axis is the difference of two knids of means, the y axis shows the frequency of the number of differences appear. It looks like a normal distribution. The two numbers show the E[log(x)] and log[E(x)], in this case, E[log(x)] is smaller than log[E(x)].
 
@@ -254,11 +245,27 @@ X∼LOG NORMAL(μ=−1,σ=1)
 sum_ln = c()
 sum_ln$pdf_g = dlnorm(x_, meanlog = -1, sdlog = 1)
 sum_ln$cdf_g = plnorm(x_, meanlog = -1, sdlog = 1)
-sum_ln$log_pdf = dlnorm(x_, meanlog = -1, sdlog = 1, log =T)
-sum_ln$log_cdf = plnorm(x_, meanlog = -1, sdlog = 1, log =T)
+log_pdf = rlnorm(x_, meanlog = -1, sdlog = 1) %>% log()
 sum_ln = data.frame(sum_ln)
 
-plot_(sum_ln)
+meanlog = -1
+sdlog = 1
+mean = exp(meanlog + (sdlog / 2)) %>% round(., 3)
+median = qlnorm(.5, meanlog = -1, sdlog = 1) %>% round(., 3)
+
+plot_(sum_ln, 2)
+
+# plot pdf, median, mean of log normal distribution of x after log trnasformation
+plot(density(log_pdf), -1, 5, type = "l", main = "Log trasformation of Log Normal Distribution's CDF")
+abline(v = mean(log_pdf), col = "grey")
+abline(v = median(log_pdf), col = "green")
+legend("topright", c("mean", "median"), col = c("grey", "green"),lty= c(1,1))
+
+plot(ecdf(log_pdf), xlim = c(-1, 5), main = "Log trasformation of Log Normal Distribution's PDF")
+abline(v = mean(log_pdf), col = "grey")
+abline(v = median(log_pdf), col = "green")
+legend("topright", c("mean", "median"), col = c("grey", "green"),lty= c(1,1))
+
 
 for(i in 1:1000){
   x = rlnorm(n, meanlog = -1, sdlog = 1)
@@ -285,22 +292,6 @@ integrate(integrand, lower = 0, upper = Inf)
 integrand2 <- function(x) {x*(dlnorm(x, meanlog = -1, sdlog = 1))}
 integrate(integrand2, lower = 0, upper = Inf)[[1]] %>% as.numeric() %>% log()
 
-# exp_of_logx = c()
-# log_of_expx = c()
-# for(i in 1:1000){
-#   x = rlnorm(n, meanlog = -1, sdlog = 1)
-# exp_of_logx[i] = x %>% log() %>% mean()
-# log_of_expx[i] = x %>% mean() %>% log()
-# }
-# data.frame(exp_of_logx, log_of_expx) %>%
-#   pivot_longer(c("exp_of_logx", "log_of_expx"), names_to = "type", values_to = "expectation") %>%
-#   ggplot(aes(x = c(seq(1, 1000), seq(1, 1000)), y = expectation, color = type)) +
-#   geom_point()
-# 
-# data.frame(exp_of_logx, log_of_expx) %>%
-#   summarise(difference = exp_of_logx - log_of_expx) %>%
-#   ggplot(aes(x = difference)) +
-#   geom_histogram()
 ```
 The six figures have the same meaning like the above one but are all about log normal distribution. For the fifth figure, it also looks like that arithmetic mean are all greater than geometric mean, and they have a positive linear relationship between each other. For the sixth figure, the distribution of the difference looks a bit skewed. The two numbers have the same conlusion as the above one.
 
@@ -311,11 +302,27 @@ X∼UNIFORM(0,12)
 sum_uni = c()
 sum_uni$pdf_g = dunif(x_, min = 0, max = 12)
 sum_uni$cdf_g = punif(x_, min = 0, max = 12)
-sum_uni$log_pdf = dunif(x_, min = 0, max = 12, log = T)
-sum_uni$log_cdf = punif(x_, min = 0, max = 12, log = T)
+log_pdf = runif(1000, min = 0, max = 12) %>% log()
 sum_uni = data.frame(sum_uni)
 
-plot_(sum_uni)
+min = 0
+max = 12
+mean = (min + max)/2
+median = qunif(.5, min, max) %>% round(., 3)
+
+plot_(sum_uni, 3)
+
+# plot pdf, median, mean of uniform distribution of x after log trnasformation
+plot(density(log_pdf), -1, 13, type = "l", main = "Log trasformation of Uniform Distribution's CDF")
+abline(v = mean(log_pdf), col = "grey")
+abline(v = median(log_pdf), col = "green")
+legend("topleft", c("mean", "median"), col = c("grey", "green"),lty= c(1,1))
+
+plot(ecdf(log_pdf), xlim = c(-8, 13), main = "Log trasformation of Uniform Distribution's PDF")
+abline(v = mean(log_pdf), col = "grey")
+abline(v = median(log_pdf), col = "green")
+legend("topleft", c("mean", "median"), col = c("grey", "green"),lty= c(1,1))
+
 
 for(i in 1:1000){
   x = runif(n, min = 0, max = 121)
@@ -342,29 +349,22 @@ integrate(integrand, lower = 0, upper = Inf)
 integrand2 <- function(x) {x*(dunif(x, min = 0, max = 12))}
 integrate(integrand2, lower = 0, upper = Inf)[[1]] %>% as.numeric() %>% log()
 
-# exp_of_logx = c()
-# log_of_expx = c()
-# for(i in 1:1000){
-#   x = runif(n, min = 0, max = 121)
-# exp_of_logx[i] = x %>% log() %>% mean()
-# log_of_expx[i] = x %>% mean() %>% log()
-# }
-# data.frame(exp_of_logx, log_of_expx) %>%
-#   pivot_longer(c("exp_of_logx", "log_of_expx"), names_to = "type", values_to = "expectation") %>%
-#   ggplot(aes(x = c(seq(1, 1000), seq(1, 1000)), y = expectation, color = type)) +
-#   geom_point()
-# 
-# data.frame(exp_of_logx, log_of_expx) %>%
-#   summarise(difference = exp_of_logx - log_of_expx) %>%
-#   ggplot(aes(x = difference)) +
-#   geom_histogram()
 ```
 The six figures have the same meaning like the above one but are all about uniform distribution. The fifth figures and sixth figure have the same conclusion as the fist set of figures. And the two numbers have the same conclusion as the above two sets of numbers.
 
 # Conclusion
 
 ## Prove of the relationship between E[log(X)] and log(E[X])
-according the Taylor Series, we have $e^x \geq 1+x$.
+according the Taylor Series, a real or complex-valued function f(x) that is infinitely differentiable at a real or complex number a is the power series
+$f(a)+{\frac {f'(a)}{1!}}(x-a)+{\frac {f''(a)}{2!}}(x-a)^{2}+{\frac {f'''(a)}{3!}}(x-a)^{3}+\cdots ,$
+<br>
+where n! denotes the factorial of n. 
+For $e^x$, 
+<br>
+The exponential function $e^{x}$ (with base e) has Maclaurin series:
+$e^{x}=\sum _{n=0}^{\infty }{\frac {x^{n}}{n!}=1+x+{\frac {x^{2}}{2!}}+{\frac {x^{3}}{3!}}+\cdots }$
+<br>
+so we can get the inequality: $e^x \geq 1+x$ by letting all terms after letting the above formula be equal to zero starting from the fourth term.
 <br>
 $E(e^Y) = E(e^{Y-E(Y)} \cdot e^{E(Y)})$
 <br>
