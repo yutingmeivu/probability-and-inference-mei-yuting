@@ -150,7 +150,7 @@ The x axis of the above figure shows the samples of the median of a standard nor
 
 Q: Using the simulated sampling distribution from the previous question, create a histogram (on the density scale). Overlay the histogram with a plot of the density function.
 ```{r}
-hist(norm_mean, freq = FALSE, main = "The distribution of the mean of standard normal distribution", breaks = 100)
+hist(norm_mean, freq = FALSE, main = "The distribution of the mean of standard normal distribution", breaks = 50)
 curve(dorder(x), add = T, lwd = 3, col = "blue")
 ```
 The x axis above shows the samples of the median of a standard normal distribution. The y aixs shows the density of different possible values of samples. 
