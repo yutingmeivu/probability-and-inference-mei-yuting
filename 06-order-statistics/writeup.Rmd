@@ -131,12 +131,12 @@ The x axis of above figure is the quantile of the distribution of median of a st
 
 Q: Simulate the sampling distribution for the median. Create a plot of the empirical CDF (ECDF). Overlay the plot of the ECDF with a plot of the CDF.
 ```{r}
-norm_mean = replicate(
+norm_median = replicate(
   1000,
   rnorm(200, mean = 0, sd = 1) %>% sort %>% `[` (100)
 )
 
-plot(ecdf(norm_mean), do.points = F, col = "green")
+plot(ecdf(norm_median), do.points = F, col = "green")
 curve(porder(x), add = T, lwd = 3, col = "blue")
 legend(
   "topleft",
@@ -150,7 +150,7 @@ The x axis of the above figure shows the samples of the median of a standard nor
 
 Q: Using the simulated sampling distribution from the previous question, create a histogram (on the density scale). Overlay the histogram with a plot of the density function.
 ```{r}
-hist(norm_mean, freq = FALSE, main = "The distribution of the mean of standard normal distribution", breaks = 50)
+hist(norm_median, freq = FALSE, main = "The distribution of the mean of standard normal distribution", breaks = 50)
 curve(dorder(x), add = T, lwd = 3, col = "blue")
 ```
 The x axis above shows the samples of the median of a standard normal distribution. The y aixs shows the density of different possible values of samples. 
@@ -162,7 +162,7 @@ Does the simulated data agree with the theoretical sampling distribution?
 q_candidate <- qorder
 
 x <- q_candidate((1:200)/200)
-y <- quantile(norm_mean, probs = (1:200)/200)
+y <- quantile(norm_median, probs = (1:200)/200)
 
 plot(x,y, asp = 1, xlab = "Theoretical quantile", ylab = "Sample quantile")
 abline(0,1)
