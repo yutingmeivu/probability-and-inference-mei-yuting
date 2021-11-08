@@ -1,0 +1,484 @@
+---
+title: "07-mle-mm"
+author: 'Yuting Mei'
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    number_sections: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE, cache=TRUE)
+```
+
+```{r}
+library(stats4)
+```
+
+```{r}
+require(dplyr)
+Hmisc::getHdata(nhgh)
+d1 <- nhgh %>% 
+  filter(sex == "female") %>% 
+  filter(age >= 18) %>% 
+  select(gh, ht) %>% 
+  filter(1:n()<=1000)
+```
+
+# Introduction
+
+Maximum likelihood (MLE) and method of moments (MM) are two common methods for constructing a model.
+
+## Questions
+
+In this deliverable, you will write a tutorial in which you will explain to the reader how one might use MLE and MM to model (a) Glycohemoglobin and (b) Height of adult females. The data will be from National Health and Nutrition Examination Survey 2009-2010 (NHANES), available from the Hmisc package. You will compare and contrast the two methods in addition to comparing and contrasting the choice of underlying distribution.
+
+# Method
+
+## Terminology
+
+__Method of moments__
+<br>
+In statistics, the method of moments is a method of estimation of population parameters.
+
+Suppose that the problem is to estimate $k$ unknown parameters $\theta _{1},\theta _{2},\dots ,\theta _{k}$ characterizing the distribution $f_{W}(w;\theta )$ of the random variable $W$. Suppose the first $k$ moments of the true distribution (the "population moments") can be expressed as functions of the $\theta$ s:
+
+${\begin{aligned}\mu _{1}&\equiv \operatorname {E} [W]=g_{1}(\theta _{1},\theta _{2},\ldots ,\theta _{k}),\\[4pt]\mu _{2}&\equiv \operatorname {E} [W^{2}]=g_{2}(\theta _{1},\theta _{2},\ldots ,\theta _{k}),\\&\,\,\,\vdots \\\mu _{k}&\equiv \operatorname {E} [W^{k}]=g_{k}(\theta _{1},\theta _{2},\ldots ,\theta _{k}).\end{aligned}}$
+Suppose a sample of size $n$ is drawn, resulting in the values $w_{1},\dots ,w_{n}$. For $j=1,\dots ,k$, let
+<br>
+${\widehat {\mu }}_{j}={\frac {1}{n}}\sum _{i=1}^{n}w_{i}^{j}$<br>
+be the j-th sample moment, an estimate of $\mu _{j}$. The method of moments estimator for $\theta _{1},\theta _{2},\ldots ,\theta _{k}$ denoted by ${\widehat {\theta }}_{1},{\widehat {\theta }}_{2},\dots ,{\widehat {\theta }}_{k}$ is defined as the solution (if there is one) to the equations:
+<br>
+${\begin{aligned}{\widehat {\mu }}_{1}&=g_{1}({\widehat {\theta }}_{1},{\widehat {\theta }}_{2},\ldots ,{\widehat {\theta }}_{k}),\\[4pt]{\widehat {\mu }}_{2}&=g_{2}({\widehat {\theta }}_{1},{\widehat {\theta }}_{2},\ldots ,{\widehat {\theta }}_{k}),\\&\,\,\,\vdots \\{\widehat {\mu }}_{k}&=g_{k}({\widehat {\theta }}_{1},{\widehat {\theta }}_{2},\ldots ,{\widehat {\theta }}_{k}).\end{aligned}}$
+
+__Maximum likelihood estimation__
+<br>
+In statistics, maximum likelihood estimation (MLE) is a method of estimating the parameters of an assumed probability distribution, given some observed data. This is achieved by maximizing a likelihood function so that, under the assumed statistical model, the observed data is most probable. The point in the parameter space that maximizes the likelihood function is called the maximum likelihood estimate.[1] The logic of maximum likelihood is both intuitive and flexible, and as such the method has become a dominant means of statistical inference.
+
+From a statistical standpoint, a given set of observations is a random sample from an unknown population. The goal of maximum likelihood estimation is to make inferences about the population that is most likely to have generated the sample, specifically the joint probability distribution of the random variables $\left\{y_{1},y_{2},\ldots \right\}$, not necessarily independent and identically distributed. Associated with each probability distribution is a unique vector $\theta =\left[\theta _{1},\,\theta _{2},\,\ldots ,\,\theta _{k}\right]^{\mathsf {T}}$ of parameters that index the probability distribution within a parametric family $ \{f(\cdot \,;\theta )\mid \theta \in \Theta \}$, where $\Theta$  is called the parameter space, a finite-dimensional subset of Euclidean space. Evaluating the joint density at the observed data sample $\mathbf{y} = (y_1, y_2, \ldots, y_n)$ gives a real-valued function,
+
+$L_{n}(\theta )=L_{n}(\theta ;\mathbf {y} )=f_{n}(\mathbf {y} ;\theta )$
+
+which is called the likelihood function. For independent and identically distributed random variables, $f_{n}(\mathbf {y} ;\theta )$ will be the product of univariate density functions.
+
+The goal of maximum likelihood estimation is to find the values of the model parameters that maximize the likelihood function over the parameter space, that is
+
+${\hat {\theta }}={\underset {\theta \in \Theta }{\operatorname {arg\;max} }}\,{\widehat {L}}_{n}(\theta \,;\mathbf {y} )$
+
+__Empirical Distribution Function Definition__
+<br>
+An empirical cumulative distribution function (also called the empirical distribution function, ECDF, or just EDF) and a cumulative distribution function are basically the same thing: they are both probability models for data. However, while a CDF is a hypothetical model of a distribution, the ECDF models empirical (i.e. observed) data. To put this another way, the ECDF is the probability distribution you would get if you sampled from your sample, instead of the population. Let’s say you have a set of experimental (observed) data x1, x2 …,xn. The EDF will give you the fraction of sample observations less than or equal to a particular value of x.
+
+__Q-Q plot__
+<br>
+In statistics, a Q–Q (quantile-quantile) plot is a probability plot, which is a graphical method for comparing two probability distributions by plotting their quantiles against each other.[1] First, the set of intervals for the quantiles is chosen. A point (x, y) on the plot corresponds to one of the quantiles of the second distribution (y-coordinate) plotted against the same quantile of the first distribution (x-coordinate). Thus the line is a parametric curve with the parameter which is the number of the interval for the quantile.
+
+__Quantile function(Inverse cdf)__
+<br>
+In probability and statistics, the quantile function, associated with a probability distribution of a random variable, specifies the value of the random variable such that the probability of the variable being less than or equal to that value equals the given probability. 
+
+With reference to a continuous and strictly monotonic distribution function, for example the cumulative distribution function {\displaystyle F_{X}\colon R\to [0,1]}{\displaystyle F_{X}\colon R\to [0,1]} of a random variable X, the quantile function Q returns a threshold value x below which random draws from the given c.d.f. would fall p percent of the time.
+
+In terms of the distribution function F, the quantile function Q returns the value x such that
+
+$F_{X}(x):=\Pr(X\leq x)=p.\,$
+
+__Normal Distribution__
+<br>
+In probability theory, a normal (or Gaussian or Gauss or Laplace–Gauss) distribution is a type of continuous probability distribution for a real-valued random variable. The general form of its probability density function(pdf) is
+
+$f(x)={\frac {1}{\sigma {\sqrt {2\pi }}}}e^{-{\frac {1}{2}}\left({\frac {x-\mu }{\sigma }}\right)^{2}}$
+<br>
+The parameter $\mu$ is the mean or expectation of the distribution (and also its median and mode), while the parameter $\sigma$ is its standard deviation. The variance of the distribution is $\sigma ^{2}$. A random variable with a Gaussian distribution is said to be normally distributed, and is called a normal deviate.
+
+* cdf
+The cumulative distribution function (CDF) of the standard normal distribution, usually denoted with the capital Greek letter {\displaystyle \Phi }\Phi  (phi), is the integral
+
+$\Phi (x)={\frac {1}{\sqrt {2\pi }}}\int _{-\infty }^{x}e^{-t^{2}/2}\,dt$
+
+* Moments
+The plain and absolute moments of a variable {\displaystyle X}X are the expected values of $ X^{p}$ and $|X|^{p}$, respectively. If the expected value $\mu$  of $X$ is zero, these parameters are called central moments; otherwise, these parameters are called non-central moments. Usually we are interested only in moments with integer order $\ p$.
+
+If $X$ has a normal distribution, the non-central moments exist and are finite for any $p$ whose real part is greater than −1. For any non-negative integer $p$, the plain central moments are:
+
+$\operatorname {E} \left[(X-\mu )^{p}\right]={\begin{cases}0&{\text{if }}p{\text{ is odd,}}\\\sigma ^{p}(p-1)!!&{\text{if }}p{\text{ is even.}}\end{cases}}$
+<br>
+Here $n!!$ denotes the double factorial, that is, the product of all numbers from $n$ to 1 that have the same parity as $n.$
+
+** 1th moment(Expectation)
+$\mu$
+
+** 2th moment(Variance)
+$\sigma^2$
+
+__Gamma Distribution__
+<br>
+In probability theory and statistics, the gamma distribution is a two-parameter family of continuous probability distributions. The exponential distribution, Erlang distribution, and chi-square distribution are special cases of the gamma distribution. There are two different parameterizations in common use:
+With a shape parameter k and a scale parameter θ.
+With a shape parameter $α = k$ and an inverse scale parameter $β = 1/θ$, called a rate parameter.
+In each of these forms, both parameters are positive real numbers.
+
+* pdf
+A random variable X that is gamma-distributed with shape α and rate β is denote:
+$X\sim\Gamma(\alpha,\beta) \equiv Gamma(\alpha,\beta)$
+The corresponding probability density function in thr shape-rate parametrization is:
+$f(x; \alpha, \beta) =\frac{\beta ^\alpha x^{(\alpha -1)}e^{(-\beta x)}}{\Gamma(\alpha)}$
+for $x > 0 , \alpha , \beta > 0$, 
+where $\Gamma(\alpha)$ is the gamma function. For all positive integers, $\Gamma(\alpha) = (a-1)!$
+
+*cdf
+The cumulative distribution function is the regularized gamma function:
+$F(x;\alpha,\beta) = \int_{0}^{x}\ f(u;\alpha,\beta)\,du = \frac{\gamma(\alpha, \beta x)}{\Gamma(\alpha)}$,
+where $\gamma(\alpha, \beta x)$ is the lower incomplete gamma function.
+
+* Moments
+The nth raw moment is given by:
+
+$\mathrm {E} [X^{n}]=\theta ^{n}{\frac {\Gamma (n+k)}{\Gamma (k)}}.$
+
+where k is shape parameter and $\theta$ is a scale parameter.
+
+** 1th moment(Expectation)
+$k \theta$
+
+** 2th moment(Variance)
+$k \theta^2$
+
+__Weibull Distribution__
+<br>
+It is named after Swedish mathematician Waloddi Weibull, who described it in detail in 1951, although it was first identified by Fréchet (1927) and first applied by Rosin & Rammler (1933) to describe a particle size distribution.
+
+* pdf
+The probability density function of a Weibull random variable is:
+
+$f(x;\lambda ,k)={\begin{cases}{\frac {k}{\lambda }}\left({\frac {x}{\lambda }}\right)^{k-1}e^{-(x/\lambda )^{k}}&x\geq 0,\\0&x<0,\end{cases}}$
+<br>
+where k > 0 is the shape parameter and λ > 0 is the scale parameter of the distribution. Its complementary cumulative distribution function is a stretched exponential function. The Weibull distribution is related to a number of other probability distributions; in particular, it interpolates between the exponential distribution (k = 1) and the Rayleigh distribution (k = 2 and $ \lambda ={\sqrt {2}}\sigma $).
+
+* cdf
+The cumulative distribution function for the Weibull distribution is
+
+$F(x;k,\lambda )=1-e^{-(x/\lambda )^{k}}\,$
+for x ≥ 0, and $F(x;k,\lambda ) = 0$ for x < 0.
+
+* Moments
+The moment generating function of the logarithm of a Weibull distributed random variable is given by[9]
+
+$\operatorname {E} \left[e^{t\log X}\right]=\lambda ^{t}\Gamma \left({\frac {t}{k}}+1\right)$
+<br>
+where $\Gamma$ is the gamma function.
+
+** 1th moment(Expectation)
+$\operatorname {E} (X)=\lambda \Gamma \left(1+{\frac {1}{k}}\right)\,$
+
+** 2th moment(Variance)
+$\operatorname {var} (X)=\lambda ^{2}\left[\Gamma \left(1+{\frac {2}{k}}\right)-\left(\Gamma \left(1+{\frac {1}{k}}\right)\right)^{2}\right]\,.$
+
+# Results
+
+```{r}
+# general function
+'%|%' = function(a,b) paste0(a,b)
+
+# pdf
+get_f = function(dist, x, ...){
+  f = eval(parse(text = "d" %|% dist))
+  f(x, ...)
+}
+
+# cdf
+get_F = function(dist, ...){
+  F = eval(parse(text = "p" %|% dist))
+  F(...)
+}
+
+# cdf_star
+ecdf_star = function(t, dist, data, smooth){
+  F = eval(parse(text = "p" %|% dist))
+  outer(t, data, function(a, b){F(a, b, smooth)}) %>% rowMeans
+}
+
+# median
+get_q = function(dist, x, ...){
+  q = eval(parse(text = "q" %|% dist))
+  q(x, ...)
+}
+
+plot_pdf = function(dist, data, x, ...){
+hist(data, breaks = 20, freq = F, main = 'PDF')
+curve(get_f(dist, x, ...), xlim = c(min(data), max(data)), add = T, lwd = 3, col = 'orange')
+abline(v = get_q(dist, x = .5, ...), col = 'red', lwd = 3)
+legend("topright", c("pdf", "median"), col = c("orange", "red"),lty= c(1,1))
+}
+
+plot_cdf = function(dist, data, x, smooth, ...){
+  plot(ecdf(data), main = "CDF")
+  curve(ecdf_star(x, data, smooth, dist= dist), add = TRUE, lwd = 3, col = 'orange')
+  abline(v = get_q(dist, x = .5, ...), col = 'red', lwd = 3)
+  legend("bottomright",
+     c("eCDF", "KDF", "median"),
+     col = c("black", "orange", "red"),
+     lwd = 3,
+     bty = "n")
+}
+
+plot_qq = function(dist, probs, data, ...){
+  x = get_q(dist, x = probs, ...)
+  y = quantile(data, probs)
+  plot(x,y, asp = 1, xlab = "Theoretical quantile", ylab = "Sample quantile", main = "QQ-Plot")
+  abline(0,1)
+}
+
+```
+
+* (a) Glycohemoglobin
+```{r}
+# mm
+# normal
+xb = mean(d1$gh)
+s2 = var(d1$gh)
+lh = xb
+ch = s2^(1/2)
+
+par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
+plot_pdf(dist = "norm", data = d1$gh, x = x, lh, ch)
+plot_cdf(dist = "norm", data = d1$gh, x = x, smooth = .3, lh, ch)
+plot_qq(dist = "norm", probs = ((1:200)/200), data = d1$gh,lh, ch)
+mtext(sprintf("Normal with estimated parameters mean = %s, sd = %s by mm", lh %>% round(., 3), ch %>% round(., 3)), side = 3, line = 0, outer = T)
+```
+<br>
+Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using method of moments(right) after assuming the sample data is from a normal distribution. The median is calculated by the quantile function of estimated distribution with the order of half of sample after sorted. The estimated cdf fit well with the cdf of samples. But the estimated pdf doesn't and QQ plot shows that the samples come from a different distribution with the estimated distribution.
+
+```{r}
+# normal
+# mle
+x_var = d1$gh %>% as.numeric()
+ll_norm = function(mean, sd){
+  -sum(dnorm(x_var, mean, sd, log = T))
+}
+para_normal = mle(minuslogl = ll_norm, start = list(mean = 1, sd = 1), lower = c(0,0.01), method = "L-BFGS-B")
+mean_hat = coef(para_normal)[1]
+sd_hat = coef(para_normal)[2]
+
+par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
+plot_pdf(dist = "norm", data = d1$gh, x = x, mean_hat, sd_hat)
+plot_cdf(dist = "norm", data = d1$gh, x = x, smooth = .3, mean_hat, sd_hat)
+plot_qq(dist = "norm", probs = ((1:200)/200), data = d1$gh,mean_hat, sd_hat)
+mtext(sprintf("Normal with estimated parameters mean = %s, sd = %s by mle", mean_hat %>% round(., 3), sd_hat %>% round(., 3)), side = 3, line = 0, outer = T)
+```
+<br>
+Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using maximum likelihood estimation method (right) after assuming the sample data is from a normal distribution. The estimated cdf also fit well with the cdf of samples. But the estimated pdf doesn't and QQ plot shows that the samples come from a different distribution with the estimated distribution. The estimated parameters of the two methods looks almost same.
+
+```{r}
+# mm
+# gamma
+xb <- mean(d1$gh)
+s2 <- var(d1$gh)
+lh <- xb/s2
+ch <- xb^2/s2 
+
+par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
+plot_pdf(dist = "gamma", data = d1$gh, x = x, ch, lh)
+plot_cdf(dist = "gamma", data = d1$gh, x = x, smooth = 1.1, ch, lh)
+plot_qq(dist = "gamma", probs = ((1:200)/200), data = d1$gh,ch, lh)
+mtext(sprintf("Gamma with estimated parameters shape = %s, scale = %s by mm", ch %>% round(., 3), lh %>% round(., 3)), side = 3, line = 0, outer = T)
+```
+<br>
+Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using method of moments(right) after assuming the sample data is from a Gamma distribution. The estimated cdf, the estimated pdf doesn't fit well with samples and QQ plot shows that the samples come from a different distribution with the estimated distribution.
+
+```{r}
+# gamma
+# mle
+x_var = d1$gh %>% as.numeric()
+ll_gamma = function(shape, rate){
+  -sum(dgamma(x_var, shape, rate, log = T))
+}
+para_gamma = mle(minuslogl = ll_gamma, start = list(shape = 1, rate = 1), lower = c(0,0.01), method = "L-BFGS-B")
+shape_hat = coef(para_gamma)[1]
+rate_hat = coef(para_gamma)[2]
+
+par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
+plot_pdf(dist = "gamma", data = d1$gh, x = x, shape_hat, rate_hat)
+plot_cdf(dist = "gamma", data = d1$gh, x = x, smooth = 1.2, shape_hat, rate_hat)
+plot_qq(dist = "gamma", probs = ((1:200)/200), data = d1$gh,shape_hat, rate_hat)
+mtext(sprintf("Gamma with estimated parameters shape = %s, rate = %s by mle", shape_hat %>% round(., 3), rate_hat %>% round(., 3)), side = 3, line = 0, outer = T)
+```
+<br>
+Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using maximum likelihood estimation method (right) after assuming the sample data is from a Gamma distribution. The estimated cdf, the estimated pdf doesn't fit well with samples and QQ plot shows that the samples come from a different distribution with the estimated distribution. The estimated parameters of two methods are different from each other.
+
+```{r}
+# weibull
+# find the most suitable shape parameter candidate by finding the shape parameter that minimizes the difference between the sample coefficient of variation and the theoretical coefficient of variation
+find_shape = function(data, a, b, c){
+  dif = c()
+for (i in seq(a, b, by = c)){
+  
+  cv = (gamma(1 + 2 / i) - gamma(1 + 1 / i) ^ 2) ^ (1/2) / gamma(1 + 1 / i)
+  x_bar = mean(data)
+  s = var(data)^(1/2)
+  cv_hat = s / x_bar
+  dif = append(dif, abs(cv - cv_hat))
+}
+  data.frame(shape_candidate = seq(a, b, by = c), dif)
+}
+
+result = find_shape(d1$gh %>% as.numeric, a = 0.1, b = 30, c = 0.001)
+shape_hat = result$shape_candidate[which.min(result$dif)]
+x_bar = mean(d1$gh)
+scale_hat = x_bar / gamma(1 + 1 / shape_hat)
+```
+<br>
+For the Weber distribution, we cannot directly calculate the parameters of shape and scale, but we can estimate shape with the help of the coefficient of variation (CV).
+First, we define a set of candidate shape parameters, and calculate the corresponding CV based on this series of candidate shape parameters. Then calculate the coefficient of variation CV_hat of the sample according to the mean and variance of the sample data. We need to find the shape parameter to make the CV and CV_hat closest. This is the shape parameter we estimate. Then we calculate the scale parameter based on the shape parameter. The above code realizes the method mentioned above.
+
+```{r}
+par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
+plot_pdf(dist = "weibull", data = d1$gh, x = x, shape_hat, scale_hat)
+plot_cdf(dist = "weibull", data = d1$gh, x = x, smooth = 0.2, shape_hat, scale_hat)
+plot_qq(dist = "weibull", probs = ((1:200)/200), data = d1$gh, shape_hat, scale_hat)
+mtext(sprintf("Weibull with estimated parameters shape = %s, scale = %s by mm", shape_hat %>% round(., 3), scale_hat %>% round(., 3)), side = 3, line = 0, outer = T)
+```
+<br>
+Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using method of moments(right) after assuming the sample data is from a Weibull distribution.  The estimated cdf, the estimated pdf doesn't fit well with samples and QQ plot shows that the samples come from a different distribution with the estimated distribution.
+
+```{r}
+# Weibull
+# mle
+x_var = d1$gh %>% as.numeric()
+ll_weibull = function(shape, scale){
+  -sum(dweibull(x_var, shape, scale, log = T))
+}
+para_weibull = mle(minuslogl = ll_weibull, start = list(shape = 1, scale = 1), lower = c(0,0.01), method = "L-BFGS-B")
+shape_hat = coef(para_weibull)[1]
+scale_hat = coef(para_weibull)[2]
+
+par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
+plot_pdf(dist = "weibull", data = d1$gh, x = x, shape_hat, scale_hat)
+plot_cdf(dist = "weibull", data = d1$gh, x = x, smooth = .3, shape_hat, scale_hat)
+plot_qq(dist = "weibull", probs = ((1:200)/200), data = d1$gh, shape_hat, scale_hat)
+mtext(sprintf("Weibull with estimated parameters shape = %s, scale = %s by mle", shape_hat %>% round(., 3), scale_hat %>% round(., 3)), side = 3, line = 0, outer = T)
+```
+<br>
+Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using maximum likelihood estimation method(right) after assuming the sample data is from a Weibull distribution. The estimated cdf, the estimated pdf doesn't fit well with samples and QQ plot shows that the samples come from a different distribution with the estimated distribution. The estimated parameters of two methods are different from each other.
+
+* (b) Height of adult females
+```{r}
+# normal
+# mm
+xb = mean(d1$ht)
+s2 = var(d1$ht)
+lh = xb
+ch = s2^(1/2)
+
+par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
+plot_pdf(dist = "norm", data = d1$ht, x = x, lh, ch)
+plot_cdf(dist = "norm", data = d1$ht, x = x, smooth = .3, lh, ch)
+plot_qq(dist = "norm", probs = ((1:200)/200), data = d1$ht,lh, ch)
+mtext(sprintf("Normal with estimated parameters mean = %s, sd = %s by mm", lh %>% round(., 3), ch %>% round(., 3)), side = 3, line = 0, outer = T)
+```
+<br>
+Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using method of moments(right) after assuming the sample data is from a normal distribution. Three plots show that estimated distribution fits well with the sample data.
+
+```{r}
+# normal
+# mle
+x_var = d1$ht %>% as.numeric()
+ll_norm = function(mean, sd){
+  -sum(dnorm(x_var, mean, sd, log = T))
+}
+para_normal = mle(minuslogl = ll_norm, start = list(mean = 1, sd = 1), lower = c(0,0.01), method = "L-BFGS-B")
+mean_hat = coef(para_normal)[1]
+sd_hat = coef(para_normal)[2]
+
+par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
+plot_pdf(dist = "norm", data = d1$ht, x = x, mean_hat, sd_hat)
+plot_cdf(dist = "norm", data = d1$ht, x = x, smooth = .3, mean_hat, sd_hat)
+plot_qq(dist = "norm", probs = ((1:200)/200), data = d1$ht,mean_hat, sd_hat)
+mtext(sprintf("Normal with estimated parameters mean = %s, sd = %s by mle", mean_hat %>% round(., 3), sd_hat %>% round(., 3)), side = 3, line = 0, outer = T)
+```
+<br>
+Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using mle(right) after assuming the sample data is from a normal distribution. Three plots show that estimated distribution fits well with the sample data. The estimated parameters of two are similar.
+
+```{r}
+# mm
+# gamma
+xb <- mean(d1$ht)
+s2 <- var(d1$ht)
+lh <- xb/s2
+ch <- xb^2/s2 
+
+par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
+plot_pdf(dist = "gamma", data = d1$ht, x = x, ch, lh)
+plot_cdf(dist = "gamma", data = d1$ht, x = x, smooth = 1.01, ch, lh)
+plot_qq(dist = "gamma", probs = ((1:200)/200), data = d1$ht,ch, lh)
+mtext(sprintf("Gamma with estimated parameters shape = %s, scale = %s by mm", ch %>% round(., 3), lh %>% round(., 3)), side = 3, line = 0, outer = T)
+```
+<br>
+Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using method of moments(right) after assuming the sample data is from a Gamma distribution. The estimated cdf, the estimated pdf doesn't fit well with samples. But pdf and QQ plot are both well fitted.
+
+```{r}
+# gamma
+# mle
+x_var = d1$ht %>% as.numeric()
+ll_gamma = function(shape, rate){
+  -sum(dgamma(x_var, shape, rate, log = T))
+}
+para_gamma = mle(minuslogl = ll_gamma, start = list(shape = 1, rate = 1), lower = c(0,0.01), method = "L-BFGS-B")
+shape_hat = coef(para_gamma)[1]
+rate_hat = coef(para_gamma)[2]
+
+par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
+plot_pdf(dist = "gamma", data = d1$ht, x = x, shape_hat, rate_hat)
+plot_cdf(dist = "gamma", data = d1$ht, x = x, smooth = 1, shape_hat, rate_hat)
+plot_qq(dist = "gamma", probs = ((1:200)/200), data = d1$ht,shape_hat, rate_hat)
+mtext(sprintf("Gamma with estimated parameters shape = %s, rate = %s by mle", shape_hat %>% round(., 3), rate_hat %>% round(., 3)), side = 3, line = 0, outer = T)
+```
+<br>
+Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using mle(right) after assuming the sample data is from a Gamma distribution. The estimated cdf, the estimated pdf doesn't fit well with samples. But pdf and QQ plot are both well fitted. The parameters of two methods are similar.
+
+```{r}
+# weibull
+# mm
+result_ht = find_shape(d1$ht %>% as.numeric, a = 0.1, b = 50, c = .001)
+shape_hat = result_ht$shape_candidate[which.min(result_ht$dif)]
+x_bar = mean(d1$ht)
+scale_hat = x_bar / gamma(1 + 1 / shape_hat)
+```
+
+```{r}
+par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
+plot_pdf(dist = "weibull", data = d1$ht, x = x, shape_hat, scale_hat)
+plot_cdf(dist = "weibull", data = d1$ht, x = x, smooth = 0.2, shape_hat, scale_hat)
+plot_qq(dist = "weibull", probs = ((1:200)/200), data = d1$ht, shape_hat, scale_hat)
+mtext(sprintf("Weibull with estimated parameters shape = %s, scale = %s by mm", shape_hat %>% round(., 3), scale_hat %>% round(., 3)), side = 3, line = 0, outer = T)
+```
+<br>
+Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using method of moments(right) after assuming the sample data is from a Weibull distribution. The estimated cdf, the estimated pdf doesn't fit well with samples. QQ plot and pdf show that the estimated distribution can fit with samples.
+
+```{r}
+# Weibull
+# mle
+x_var = d1$ht %>% as.numeric()
+ll_weibull = function(shape, scale){
+  -sum(dweibull(x_var, shape, scale, log = T))
+}
+para_weibull = mle(minuslogl = ll_weibull, start = list(shape = 1, scale = 1), lower = c(0,0.01), method = "L-BFGS-B")
+shape_hat = coef(para_weibull)[1]
+scale_hat = coef(para_weibull)[2]
+
+par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
+plot_pdf(dist = "weibull", data = d1$ht, x = x, shape_hat, scale_hat)
+plot_cdf(dist = "weibull", data = d1$ht, x = x, smooth = .3, shape_hat, scale_hat)
+plot_qq(dist = "weibull", probs = ((1:200)/200), data = d1$ht, shape_hat, scale_hat)
+mtext(sprintf("Weibull with estimated parameters shape = %s, scale = %s by mle", shape_hat %>% round(., 3), scale_hat %>% round(., 3)), side = 3, line = 0, outer = T)
+```
+<br>
+Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using mle(right) after assuming the sample data is from a Weibull distribution. The estimated cdf, the estimated pdf doesn't fit well with samples. QQ plot and pdf show that the estimated distribution can fit with samples. But they are not as good as normal distribution with estimation. 
+
+# Conclusion
+* Method of moments and maximum likelihood estimation are both strong method of parameter estimation. However, mm requires a lot of calculations compared to mle, and sometimes we can't even express the distribution parameters directly with the sample mean and sample variance (such as the Weibull distribution).
+* It is not always applicable to make a distribution assumption for the sample and then estimate the parameters to infer what kind of distribution the sample comes from. For example, for adult female height data, the normal distribution can be well fitted, but for Glycohemoglobin, the normal distribution, gamma distribution and weibull distribution are not suitable for this. We need other methods to infer the law of sample distribution.
