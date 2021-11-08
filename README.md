@@ -18,6 +18,6 @@ a GitHub repo for 5620 Probability and Statistical Inference
 
 06-order-statistics: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/06-order-statistics
 
-07-mm-mle: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/07-mle-mm
+07-mle-mm: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/07-mle-mm
 
 ec1-birthday-problem: https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/ec1-birthday-problem
