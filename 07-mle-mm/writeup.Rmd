@@ -17,9 +17,6 @@ knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE, cache=TRUE)
 
 ```{r}
 library(stats4)
-```
-
-```{r}
 require(dplyr)
 Hmisc::getHdata(nhgh)
 d1 <- nhgh %>% 
@@ -196,12 +193,6 @@ get_F = function(dist, ...){
   F(...)
 }
 
-# cdf_star
-ecdf_star = function(t, dist, data, smooth){
-  F = eval(parse(text = "p" %|% dist))
-  outer(t, data, function(a, b){F(a, b, smooth)}) %>% rowMeans
-}
-
 # median
 get_q = function(dist, x, ...){
   q = eval(parse(text = "q" %|% dist))
@@ -215,12 +206,12 @@ abline(v = get_q(dist, x = .5, ...), col = 'red', lwd = 3)
 legend("topright", c("pdf", "median"), col = c("orange", "red"),lty= c(1,1))
 }
 
-plot_cdf = function(dist, data, x, smooth, ...){
+plot_cdf = function(dist, data, x, ...){
   plot(ecdf(data), main = "CDF")
-  curve(ecdf_star(x, data, smooth, dist= dist), add = TRUE, lwd = 3, col = 'orange')
+  curve(get_F(dist= dist, x, ...), add = TRUE, lwd = 3, col = 'orange')
   abline(v = get_q(dist, x = .5, ...), col = 'red', lwd = 3)
   legend("bottomright",
-     c("eCDF", "KDF", "median"),
+     c("eCDF", "estimated CDF", "median"),
      col = c("black", "orange", "red"),
      lwd = 3,
      bty = "n")
@@ -246,7 +237,7 @@ ch = s2^(1/2)
 
 par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
 plot_pdf(dist = "norm", data = d1$gh, x = x, lh, ch)
-plot_cdf(dist = "norm", data = d1$gh, x = x, smooth = .3, lh, ch)
+plot_cdf(dist = "norm", data = d1$gh, x = x, lh, ch)
 plot_qq(dist = "norm", probs = ((1:200)/200), data = d1$gh,lh, ch)
 mtext(sprintf("Normal with estimated parameters mean = %s, sd = %s by mm", lh %>% round(., 3), ch %>% round(., 3)), side = 3, line = 0, outer = T)
 ```
@@ -266,7 +257,7 @@ sd_hat = coef(para_normal)[2]
 
 par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
 plot_pdf(dist = "norm", data = d1$gh, x = x, mean_hat, sd_hat)
-plot_cdf(dist = "norm", data = d1$gh, x = x, smooth = .3, mean_hat, sd_hat)
+plot_cdf(dist = "norm", data = d1$gh, x = x, mean_hat, sd_hat)
 plot_qq(dist = "norm", probs = ((1:200)/200), data = d1$gh,mean_hat, sd_hat)
 mtext(sprintf("Normal with estimated parameters mean = %s, sd = %s by mle", mean_hat %>% round(., 3), sd_hat %>% round(., 3)), side = 3, line = 0, outer = T)
 ```
@@ -283,9 +274,9 @@ ch <- xb^2/s2
 
 par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
 plot_pdf(dist = "gamma", data = d1$gh, x = x, ch, lh)
-plot_cdf(dist = "gamma", data = d1$gh, x = x, smooth = 1.1, ch, lh)
+plot_cdf(dist = "gamma", data = d1$gh, x = x,  ch, lh)
 plot_qq(dist = "gamma", probs = ((1:200)/200), data = d1$gh,ch, lh)
-mtext(sprintf("Gamma with estimated parameters shape = %s, scale = %s by mm", ch %>% round(., 3), lh %>% round(., 3)), side = 3, line = 0, outer = T)
+mtext(sprintf("Gamma with estimated parameters shape = %s, rate = %s by mm", ch %>% round(., 3), lh %>% round(., 3)), side = 3, line = 0, outer = T)
 ```
 <br>
 Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using method of moments(right) after assuming the sample data is from a Gamma distribution. The estimated cdf, the estimated pdf doesn't fit well with samples and QQ plot shows that the samples come from a different distribution with the estimated distribution.
@@ -303,7 +294,7 @@ rate_hat = coef(para_gamma)[2]
 
 par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
 plot_pdf(dist = "gamma", data = d1$gh, x = x, shape_hat, rate_hat)
-plot_cdf(dist = "gamma", data = d1$gh, x = x, smooth = 1.2, shape_hat, rate_hat)
+plot_cdf(dist = "gamma", data = d1$gh, x = x, shape_hat, rate_hat)
 plot_qq(dist = "gamma", probs = ((1:200)/200), data = d1$gh,shape_hat, rate_hat)
 mtext(sprintf("Gamma with estimated parameters shape = %s, rate = %s by mle", shape_hat %>% round(., 3), rate_hat %>% round(., 3)), side = 3, line = 0, outer = T)
 ```
@@ -313,9 +304,9 @@ Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf
 ```{r}
 # weibull
 # find the most suitable shape parameter candidate by finding the shape parameter that minimizes the difference between the sample coefficient of variation and the theoretical coefficient of variation
-find_shape = function(data, a, b, c){
+find_shape = function(data, a, b){
   dif = c()
-for (i in seq(a, b, by = c)){
+for (i in seq(a, b, by = 0.001)){
   
   cv = (gamma(1 + 2 / i) - gamma(1 + 1 / i) ^ 2) ^ (1/2) / gamma(1 + 1 / i)
   x_bar = mean(data)
@@ -323,11 +314,14 @@ for (i in seq(a, b, by = c)){
   cv_hat = s / x_bar
   dif = append(dif, abs(cv - cv_hat))
 }
-  data.frame(shape_candidate = seq(a, b, by = c), dif)
+  out = data.frame(shape_candidate = seq(a, b, by = 0.001), dif)
+  f = approxfun(out$shape_candidate, out$dif)
+  f(seq(a, b, by = 0.001))
 }
 
-result = find_shape(d1$gh %>% as.numeric, a = 0.1, b = 30, c = 0.001)
-shape_hat = result$shape_candidate[which.min(result$dif)]
+result = find_shape(d1$gh %>% as.numeric, a = 0.1, b = 35)
+shape_hat = seq(0.1, 35, by = 0.001)[which.min(result)]
+# shape_hat = result$shape_candidate[which.min(result$dif)]
 x_bar = mean(d1$gh)
 scale_hat = x_bar / gamma(1 + 1 / shape_hat)
 ```
@@ -335,10 +329,11 @@ scale_hat = x_bar / gamma(1 + 1 / shape_hat)
 For the Weber distribution, we cannot directly calculate the parameters of shape and scale, but we can estimate shape with the help of the coefficient of variation (CV).
 First, we define a set of candidate shape parameters, and calculate the corresponding CV based on this series of candidate shape parameters. Then calculate the coefficient of variation CV_hat of the sample according to the mean and variance of the sample data. We need to find the shape parameter to make the CV and CV_hat closest. This is the shape parameter we estimate. Then we calculate the scale parameter based on the shape parameter. The above code realizes the method mentioned above.
 
+
 ```{r}
 par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
 plot_pdf(dist = "weibull", data = d1$gh, x = x, shape_hat, scale_hat)
-plot_cdf(dist = "weibull", data = d1$gh, x = x, smooth = 0.2, shape_hat, scale_hat)
+plot_cdf(dist = "weibull", data = d1$gh, x = x, shape_hat, scale_hat)
 plot_qq(dist = "weibull", probs = ((1:200)/200), data = d1$gh, shape_hat, scale_hat)
 mtext(sprintf("Weibull with estimated parameters shape = %s, scale = %s by mm", shape_hat %>% round(., 3), scale_hat %>% round(., 3)), side = 3, line = 0, outer = T)
 ```
@@ -358,7 +353,7 @@ scale_hat = coef(para_weibull)[2]
 
 par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
 plot_pdf(dist = "weibull", data = d1$gh, x = x, shape_hat, scale_hat)
-plot_cdf(dist = "weibull", data = d1$gh, x = x, smooth = .3, shape_hat, scale_hat)
+plot_cdf(dist = "weibull", data = d1$gh, x = x,  shape_hat, scale_hat)
 plot_qq(dist = "weibull", probs = ((1:200)/200), data = d1$gh, shape_hat, scale_hat)
 mtext(sprintf("Weibull with estimated parameters shape = %s, scale = %s by mle", shape_hat %>% round(., 3), scale_hat %>% round(., 3)), side = 3, line = 0, outer = T)
 ```
@@ -376,7 +371,7 @@ ch = s2^(1/2)
 
 par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
 plot_pdf(dist = "norm", data = d1$ht, x = x, lh, ch)
-plot_cdf(dist = "norm", data = d1$ht, x = x, smooth = .3, lh, ch)
+plot_cdf(dist = "norm", data = d1$ht, x = x, lh, ch)
 plot_qq(dist = "norm", probs = ((1:200)/200), data = d1$ht,lh, ch)
 mtext(sprintf("Normal with estimated parameters mean = %s, sd = %s by mm", lh %>% round(., 3), ch %>% round(., 3)), side = 3, line = 0, outer = T)
 ```
@@ -396,7 +391,7 @@ sd_hat = coef(para_normal)[2]
 
 par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
 plot_pdf(dist = "norm", data = d1$ht, x = x, mean_hat, sd_hat)
-plot_cdf(dist = "norm", data = d1$ht, x = x, smooth = .3, mean_hat, sd_hat)
+plot_cdf(dist = "norm", data = d1$ht, x = x, mean_hat, sd_hat)
 plot_qq(dist = "norm", probs = ((1:200)/200), data = d1$ht,mean_hat, sd_hat)
 mtext(sprintf("Normal with estimated parameters mean = %s, sd = %s by mle", mean_hat %>% round(., 3), sd_hat %>% round(., 3)), side = 3, line = 0, outer = T)
 ```
@@ -413,9 +408,9 @@ ch <- xb^2/s2
 
 par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
 plot_pdf(dist = "gamma", data = d1$ht, x = x, ch, lh)
-plot_cdf(dist = "gamma", data = d1$ht, x = x, smooth = 1.01, ch, lh)
+plot_cdf(dist = "gamma", data = d1$ht, x = x, ch, lh)
 plot_qq(dist = "gamma", probs = ((1:200)/200), data = d1$ht,ch, lh)
-mtext(sprintf("Gamma with estimated parameters shape = %s, scale = %s by mm", ch %>% round(., 3), lh %>% round(., 3)), side = 3, line = 0, outer = T)
+mtext(sprintf("Gamma with estimated parameters shape = %s, rate = %s by mm", ch %>% round(., 3), lh %>% round(., 3)), side = 3, line = 0, outer = T)
 ```
 <br>
 Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf(middle) and QQ plot of sample data with theoretical data with parameters estimated by using method of moments(right) after assuming the sample data is from a Gamma distribution. The estimated cdf, the estimated pdf doesn't fit well with samples. But pdf and QQ plot are both well fitted.
@@ -433,7 +428,7 @@ rate_hat = coef(para_gamma)[2]
 
 par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
 plot_pdf(dist = "gamma", data = d1$ht, x = x, shape_hat, rate_hat)
-plot_cdf(dist = "gamma", data = d1$ht, x = x, smooth = 1, shape_hat, rate_hat)
+plot_cdf(dist = "gamma", data = d1$ht, x = x, shape_hat, rate_hat)
 plot_qq(dist = "gamma", probs = ((1:200)/200), data = d1$ht,shape_hat, rate_hat)
 mtext(sprintf("Gamma with estimated parameters shape = %s, rate = %s by mle", shape_hat %>% round(., 3), rate_hat %>% round(., 3)), side = 3, line = 0, outer = T)
 ```
@@ -443,8 +438,8 @@ Above figure shows the estimated pdf on histogram(left), estimated cdf onto ecdf
 ```{r}
 # weibull
 # mm
-result_ht = find_shape(d1$ht %>% as.numeric, a = 0.1, b = 50, c = .001)
-shape_hat = result_ht$shape_candidate[which.min(result_ht$dif)]
+result_ht = find_shape(d1$ht %>% as.numeric, a = 0.1, b = 50)
+shape_hat = seq(0.1, 50, by = 0.001)[which.min(result_ht)]
 x_bar = mean(d1$ht)
 scale_hat = x_bar / gamma(1 + 1 / shape_hat)
 ```
@@ -452,7 +447,7 @@ scale_hat = x_bar / gamma(1 + 1 / shape_hat)
 ```{r}
 par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
 plot_pdf(dist = "weibull", data = d1$ht, x = x, shape_hat, scale_hat)
-plot_cdf(dist = "weibull", data = d1$ht, x = x, smooth = 0.2, shape_hat, scale_hat)
+plot_cdf(dist = "weibull", data = d1$ht, x = x,  shape_hat, scale_hat)
 plot_qq(dist = "weibull", probs = ((1:200)/200), data = d1$ht, shape_hat, scale_hat)
 mtext(sprintf("Weibull with estimated parameters shape = %s, scale = %s by mm", shape_hat %>% round(., 3), scale_hat %>% round(., 3)), side = 3, line = 0, outer = T)
 ```
@@ -472,7 +467,7 @@ scale_hat = coef(para_weibull)[2]
 
 par(mfcol = c(1,3), pin = c(2, 1), oma = c(0, 0, 3, 0))
 plot_pdf(dist = "weibull", data = d1$ht, x = x, shape_hat, scale_hat)
-plot_cdf(dist = "weibull", data = d1$ht, x = x, smooth = .3, shape_hat, scale_hat)
+plot_cdf(dist = "weibull", data = d1$ht, x = x, shape_hat, scale_hat)
 plot_qq(dist = "weibull", probs = ((1:200)/200), data = d1$ht, shape_hat, scale_hat)
 mtext(sprintf("Weibull with estimated parameters shape = %s, scale = %s by mle", shape_hat %>% round(., 3), scale_hat %>% round(., 3)), side = 3, line = 0, outer = T)
 ```
