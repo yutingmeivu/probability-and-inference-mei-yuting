@@ -1,0 +1,248 @@
+---
+title: "08-coverage-probability"
+author: 'Yuting Mei'
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    number_sections: yes
+    toc_depth: 3
+    toc_float: yes
+---
+
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE, cache=TRUE)
+library(dplyr)
+library(stats4)
+```
+
+# Introduction
+
+Coverage probability is an important operating characteristic of methods for constructing interval estimates, particularly confidence intervals.
+
+# Methods
+
+## Terminology
+
+__Confidence Interval__
+<br>
+In statistics, a confidence interval (CI) is a range of estimates, defined by a lower bound and upper bound, for an unknown parameter. The interval is computed at a designated confidence level. A 95% confidence level is most common, but other levels, such as 90% or 99%, are sometimes used. The confidence level represents the long-run frequency of confidence intervals that contain the true value of the unknown population parameter. In other words, 95% of confidence intervals computed at the 95% confidence level contain the parameter, and likewise for other confidence levels.
+
+Let X be a random sample from a probability distribution with statistical parameter θ, which is a quantity to be estimated, and φ, representing quantities that are not of immediate interest. A confidence interval for the parameter θ, with confidence level or confidence coefficient γ, is an interval with random endpoints (u(X), v(X)), determined by the pair of random variables u(X) and v(X), with the property:
+
+${\Pr }_{\theta ,\varphi }(u(X)<\theta <v(X))=\gamma {\text{ for all }}(\theta ,\varphi ).$
+The quantities φ in which there is no immediate interest are called nuisance parameters, as statistical theory still needs to find some way to deal with them. The number γ, with typical values close to but not greater than 1, is sometimes given in the form 1 − α (or as a percentage 100%·(1 − α)), where α is a small non-negative number, close to 0.
+
+__Sampling Distribution__
+<br>
+In statistics, a sampling distribution or finite-sample distribution is the probability distribution of a given random-sample-based statistic. If an arbitrarily large number of samples, each involving multiple observations (data points), were separately used in order to compute one value of a statistic (such as, for example, the sample mean or sample variance) for each sample, then the sampling distribution is the probability distribution of the values that the statistic takes on. In many contexts, only one sample is observed, but the sampling distribution can be found theoretically.
+
+__Standard Normal Distribution__
+<br>
+The standard normal distribution, also called the z-distribution, is a special normal distribution where the mean is 0 and the standard deviation is 1.
+
+In probability theory, a normal (or Gaussian or Gauss or Laplace–Gauss) distribution is a type of continuous probability distribution for a real-valued random variable. The general form of its probability density function is:
+
+$f(x)={\frac {1}{\sigma {\sqrt {2\pi }}}}e^{-{\frac {1}{2}}\left({\frac {x-\mu }{\sigma }}\right)^{2}}$
+
+The parameter $\mu$ is the mean or expectation of the distribution (and also its median and mode), while the parameter $\sigma$ is its standard deviation.
+
+__Maximum Likelihood Estimation__
+<br>
+In statistics, maximum likelihood estimation (MLE) is a method of estimating the parameters of an assumed probability distribution, given some observed data. This is achieved by maximizing a likelihood function so that, under the assumed statistical model, the observed data is most probable. The point in the parameter space that maximizes the likelihood function is called the maximum likelihood estimate.[1] The logic of maximum likelihood is both intuitive and flexible, and as such the method has become a dominant means of statistical inference.
+
+From a statistical standpoint, a given set of observations is a random sample from an unknown population. The goal of maximum likelihood estimation is to make inferences about the population that is most likely to have generated the sample, specifically the joint probability distribution of the random variables $\left\{y_{1},y_{2},\ldots \right\}$, not necessarily independent and identically distributed. Associated with each probability distribution is a unique vector $\theta =\left[\theta _{1},\,\theta _{2},\,\ldots ,\,\theta _{k}\right]^{\mathsf {T}}$ of parameters that index the probability distribution within a parametric family $ \{f(\cdot \,;\theta )\mid \theta \in \Theta \}$, where $\Theta$  is called the parameter space, a finite-dimensional subset of Euclidean space. Evaluating the joint density at the observed data sample $\mathbf{y} = (y_1, y_2, \ldots, y_n)$ gives a real-valued function,
+
+$L_{n}(\theta )=L_{n}(\theta ;\mathbf {y} )=f_{n}(\mathbf {y} ;\theta )$
+
+which is called the likelihood function. For independent and identically distributed random variables, $f_{n}(\mathbf {y} ;\theta )$ will be the product of univariate density functions.
+
+The goal of maximum likelihood estimation is to find the values of the model parameters that maximize the likelihood function over the parameter space, that is
+
+${\hat {\theta }}={\underset {\theta \in \Theta }{\operatorname {arg\;max} }}\,{\widehat {L}}_{n}(\theta \,;\mathbf {y} )$
+
+__Probability density function(pdf)__
+<br>
+In probability theory, a probability density function (PDF), or density of a continuous random variable, is a function whose value at any given sample (or point) in the sample space (the set of possible values taken by the random variable) can be interpreted as providing a relative likelihood that the value of the random variable would be close to that sample.
+
+A probability density function is most commonly associated with absolutely continuous univariate distributions. A random variable {\displaystyle X}X has density {\displaystyle f_{X}}f_X, where {\displaystyle f_{X}}f_X is a non-negative Lebesgue-integrable function, if:
+$\Pr[a\leq X\leq b]=\int _{a}^{b}f_{X}(x)\,dx.$
+
+__Cumulative distribution function(cdf)__
+<br>
+In probability theory and statistics, the cumulative distribution function (CDF) of a real-valued random variable $X$, or just distribution function of $X$, evaluated at $x$, is the probability that $X$ will take a value less than or equal to $x$.
+
+The cumulative distribution function of a real-valued random variable $X$ is the function given by:
+$F_{X}(x)=\operatorname {P} (X\leq x)$
+where the right-hand side represents the probability that the random variable $X$ takes on a value less than or equal to $x$. 
+
+__order statistics__
+<br>
+* Cumulative distribution function of order statistics
+For a random sample as above, with cumulative distribution $F_X(x)$, the order statistics for that sample have cumulative distributions as follows (where r specifies which order statistic):
+$F_{X_{(r)}}(x)=\sum _{j=r}^{n}{\binom {n}{j}}[F_{X}(x)]^{j}[1-F_{X}(x)]^{n-j}$
+
+* Probability Density function of order statistics
+$f_{X_{(r)}}(x)={\frac {n!}{(r-1)!(n-r)!}}f_{X}(x)[F_{X}(x)]^{r-1}[1-F_{X}(x)]^{n-r}.$
+
+## Suggested steps
+* Step: Generate a single sample from a standard normal distribution of size N=201. Explain to the reader how you use MLE to estimate the distribution.
+
+* Step: Show the reader how you approximate the sampling distribution of the median, conditional on the estimate of the distribution in the previous step.
+
+* Step: Describe how you calculate a 95% confidence interval from the approximated sampling distribution.
+
+* Step: Explain the concept of coverage probability. Explain your code for calculating the coverage probability.
+
+* Step: Perform the simulation and report the results.
+
+* Step: Describe how you might change the simulation to learn more about the operating characteristics of your chosen method for constructing the 95% confidence interval.
+
+# Results
+
+Following by step1, we generate 201 random numbers (our sample) from a standard normal distribution. Through MLE, we look for the parameters that can maximize the value of the joint probability density function of the random variable (here, it is 201 samples because extraction and observation have been carried out), and the calculated estimated mean value and estimated standard deviation are the parameters of the estimated distribution.
+```{r}
+sample = rnorm(201, mean = 0, sd = 1)
+
+ll_norm = function(mean, sd){
+  sum(-log(dnorm(sample, mean, sd)))
+}
+
+ll_norm(0, 0.01)
+
+para_normal = mle(minuslogl = ll_norm, start = list(mean = 1, sd = 1), lower = c(0,1), method = "L-BFGS-B")
+
+(x_bar = coef(para_normal)[1])
+(sd = coef(para_normal)[2])
+```
+
+I used the pdf of order statistics to approximate the sampling distribution of the median. 
+```{r}
+dorder = function(x, mean, sd){
+k = 100
+n = 200
+  k*
+  choose(n,k)*
+  (pnorm(x, mean, sd))^(k-1)*
+  (1-pnorm(x, mean, sd))^(n-k)*
+  dnorm(x, mean , sd)
+
+}
+
+curve(dorder(x, mean = x_bar, sd =sd),
+      -0.9,
+      1.1, 
+      xlab = "Distribution of Median of normal distribution with estimated parameters",
+      ylab = "Density")
+```
+The x axis is the possible values of the probability of median of the estimated distribution. The y axis is the density or frequency of each value. The pdf of median of a normal distribution also looks like a normal distribution.
+
+From the step above, we can get the pdf of the median of estimated distribution. If we give a number from the range of density of that distribution, we can know how many numbers are greater than or equal to that number, then we can calculate the proportions that how many numbers are in. In the following step, we are going to find the density that can make 95% of median of estimated distribution in and find the corresponding interval. In this blog, we define the 95% confidence interval of the median to be the middle 95% of sampling distribution of the median.
+```{r}
+# curve(dnorm(x, mean = x_bar, sd = sd), -5,5)
+porder <- function(x, mean, sd){
+  k = 100
+  n = 200
+  pbinom(k-1, n, pnorm(x, mean, sd), lower.tail = FALSE)
+}
+
+one_d = function(d, mean, sd){
+x_var = seq(-2, 2, by = 0.01)
+mode = x_var[which.max(dorder(x_var, mean, sd))]
+x1 = uniroot(function(x,d) {dorder(x, mean, sd) - d}, c(-2, mode), d = d)$root
+x2 = uniroot(function(x,d) {dorder(x, mean, sd) - d}, c(mode, 2), d = d)$root
+is = porder(x2, mean, sd) - porder(x1, mean,sd)
+list(x1 = x1, x2 = x2, is =is)
+}
+
+many_d = function(ds, mean, sd){
+  out = NA*ds
+  for (i in seq_along(ds)){
+    out[i] = one_d(ds[i], mean, sd)$is
+  }
+  out
+}
+
+target_d = uniroot(function(d, is){many_d(d, x_bar, sd) - is}, c(0.001, 4), is = .95)$root
+(x1 = one_d(target_d, mean = x_bar, sd =sd)$x1)
+(x2 = one_d(target_d, mean = x_bar, sd =sd)$x2)
+
+curve(dorder(x, mean = x_bar, sd =sd), -1,1, xlab = "Distribution of median of estimated normal distribution",
+      ylab = "Density")
+abline(h = target_d, col = 'orange', lwd = 3)
+text(-0.6, 4, sprintf("95%%CI is (%.3f, %.3f)", x1, x2))
+abline(v = median(sample), col = 'blue', lwd = 3)
+```
+The x axis and y axis is the same as the above figure, the blue line shows the median of the sampling distribution. The orange line is the density that we can get 95% confidence interval of the sampling distribution of the median.
+
+From the steps above, we know that how to calculate the 95% CI of a single sample, now we can use the same logic to calculate a series of samples. We use simulation to generate 100 samples.
+```{r}
+N = 100
+ssample = replicate(N, rnorm(201, mean = 0, sd = 1))
+
+para_xb = c()
+para_sd = c()
+
+for (i in seq(ncol(ssample))){
+  ll_norm = function(mean, sd){
+  sum(-log(dnorm(ssample[,i], mean, sd)))
+  }
+  para = mle(minuslogl = ll_norm, start = list(mean = 1, sd = 1), lower = c(0,1), method = "L-BFGS-B")
+  para_xb = append(para_xb,coef(para)[1])
+  para_sd = append(para_sd,coef(para)[2])
+}
+para_sum = data.frame(para_xb, para_sd)
+
+one_d = function(d, mean, sd){
+x_var = seq(-5, 5, by = 0.01)
+mode = x_var[which.max(dnorm(x_var, mean, sd))]
+x1 = uniroot(function(x,d) {dorder(x, mean, sd) - d}, c(-5, mode), d = d)$root
+x2 = uniroot(function(x,d) {dorder(x, mean, sd) - d}, c(mode, 5), d = d)$root
+is = porder(x2, mean, sd) - porder(x1, mean, sd)
+list(x1 = x1, x2 = x2, is =is)
+}
+
+many_d = function(ds,mean, sd){
+  out = NA*ds
+  for (i in seq_along(ds)){
+    out[i] = one_d(d = ds[i], mean, sd)$is
+  }
+  out
+}
+
+target_ds = c()
+x1_sum = c()
+x2_sum = c()
+for (i in seq(ncol(ssample))){
+  target_ds[i] = uniroot(function(d, is){many_d(d, mean = para_xb[i], sd = para_sd[i]) - is}, c(0.001, 3.9), is = .95)$root
+  x1_sum[i] = one_d(target_ds[i], mean = para_xb[i], sd = para_sd[i])$x1
+  x2_sum[i] = one_d(target_ds[i], mean = para_xb[i], sd = para_sd[i])$x2
+}
+
+data.frame(x1_sum, x2_sum)
+```
+Above is the two endpoints of 95% CI for different samples.
+
+```{r}
+plot(x = x1_sum, y = seq(1,N, by = 1),xlab = 'parameter of interest',
+     ylab = 'Sample', col = 'white',xlim = c(min(sample),max(sample)))
+abline(v = 0, col = 'grey', lwd = 2)
+c = 0
+for (i in seq_along(x1_sum)){
+  col = ifelse(median(sample) < x2_sum[i] & median(sample) > x1_sum[i], 'blue', 'red')
+  lines(x = c(x1_sum[i], x2_sum[i]), y = c(i,i), col = col)
+  if (col == 'blue'){
+    c = c + 1
+  }
+}
+text(-1.8, 80, sprintf("coverage probability is %.2f", c / N))
+legend("bottomright",
+       c("captured", "not captured"),
+       col = c("blue", "red"), 
+       lwd = 3,
+       bty = 'n')
+```
+We can visualize them, the blue color means that the 95% CI captured the population parameter, red one means it didn't. Idealy, a 95% confidence interval will capture the population parameter of interest in 95% of samples.
+
+It can be found that almost all confidence intervals capture the median of the population, which means that our confidence interval is relatively wide, which may indicate that the confidence interval is not too accurate for the estimation of the true value of the population. I think we can learn more about how the 95% CI will change by increasing the number of samples per sample.
