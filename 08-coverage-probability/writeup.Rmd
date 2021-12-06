@@ -77,15 +77,6 @@ The cumulative distribution function of a real-valued random variable $X$ is the
 $F_{X}(x)=\operatorname {P} (X\leq x)$
 where the right-hand side represents the probability that the random variable $X$ takes on a value less than or equal to $x$. 
 
-__order statistics__
-<br>
-* Cumulative distribution function of order statistics
-For a random sample as above, with cumulative distribution $F_X(x)$, the order statistics for that sample have cumulative distributions as follows (where r specifies which order statistic):
-$F_{X_{(r)}}(x)=\sum _{j=r}^{n}{\binom {n}{j}}[F_{X}(x)]^{j}[1-F_{X}(x)]^{n-j}$
-
-* Probability Density function of order statistics
-$f_{X_{(r)}}(x)={\frac {n!}{(r-1)!(n-r)!}}f_{X}(x)[F_{X}(x)]^{r-1}[1-F_{X}(x)]^{n-r}.$
-
 ## Suggested steps
 * Step: Generate a single sample from a standard normal distribution of size N=201. Explain to the reader how you use MLE to estimate the distribution.
 
@@ -102,6 +93,7 @@ $f_{X_{(r)}}(x)={\frac {n!}{(r-1)!(n-r)!}}f_{X}(x)[F_{X}(x)]^{r-1}[1-F_{X}(x)]^{
 # Results
 
 Following by step1, we generate 201 random numbers (our sample) from a standard normal distribution. Through MLE, we look for the parameters that can maximize the value of the joint probability density function of the random variable (here, it is 201 samples because extraction and observation have been carried out), and the calculated estimated mean value and estimated standard deviation are the parameters of the estimated distribution.
+
 ```{r}
 sample = rnorm(201, mean = 0, sd = 1)
 
@@ -119,66 +111,39 @@ para_normal = mle(minuslogl = ll_norm, start = list(mean = 1, sd = 1), lower = c
 
 I used the pdf of order statistics to approximate the sampling distribution of the median. 
 ```{r}
-dorder = function(x, mean, sd){
-k = 100
-n = 200
-  k*
-  choose(n,k)*
-  (pnorm(x, mean, sd))^(k-1)*
-  (1-pnorm(x, mean, sd))^(n-k)*
-  dnorm(x, mean , sd)
-
-}
-
-curve(dorder(x, mean = x_bar, sd =sd),
-      -0.9,
-      1.1, 
-      xlab = "Distribution of Median of normal distribution with estimated parameters",
-      ylab = "Density")
+norm_median = replicate(
+  1000,
+  rnorm(500, mean = x_bar, sd = sd) %>%
+  sort %>% '[' (250))
+hist(norm_median,
+     main = "PDF of Median of normal distribution with estimated parameters",
+     ylab = "Density",
+     breaks = 50)
+# plot(ecdf(norm_median),
+#       main = "ECDF of Median of normal distribution with estimated parameters",
+#       ylab = "F(x)",
+#      xlab = "x")
 ```
-The x axis is the possible values of the probability of median of the estimated distribution. The y axis is the density or frequency of each value. The pdf of median of a normal distribution also looks like a normal distribution.
+The first figure is the histogram of the distribution of median of normal distribution with estimated parameters. The x axis is the possible values of the median of estimated normal distribution. The y axis is the Density of each value.
 
 From the step above, we can get the pdf of the median of estimated distribution. If we give a number from the range of density of that distribution, we can know how many numbers are greater than or equal to that number, then we can calculate the proportions that how many numbers are in. In the following step, we are going to find the density that can make 95% of median of estimated distribution in and find the corresponding interval. In this blog, we define the 95% confidence interval of the median to be the middle 95% of sampling distribution of the median.
+
 ```{r}
-# curve(dnorm(x, mean = x_bar, sd = sd), -5,5)
-porder <- function(x, mean, sd){
-  k = 100
-  n = 200
-  pbinom(k-1, n, pnorm(x, mean, sd), lower.tail = FALSE)
-}
+x1 = quantile(norm_median, c(0.025, 0.975))[1] %>% as.numeric
+x2 = quantile(norm_median, c(0.025, 0.975))[2] %>% as.numeric
 
-one_d = function(d, mean, sd){
-x_var = seq(-2, 2, by = 0.01)
-mode = x_var[which.max(dorder(x_var, mean, sd))]
-x1 = uniroot(function(x,d) {dorder(x, mean, sd) - d}, c(-2, mode), d = d)$root
-x2 = uniroot(function(x,d) {dorder(x, mean, sd) - d}, c(mode, 2), d = d)$root
-is = porder(x2, mean, sd) - porder(x1, mean,sd)
-list(x1 = x1, x2 = x2, is =is)
-}
-
-many_d = function(ds, mean, sd){
-  out = NA*ds
-  for (i in seq_along(ds)){
-    out[i] = one_d(ds[i], mean, sd)$is
-  }
-  out
-}
-
-target_d = uniroot(function(d, is){many_d(d, x_bar, sd) - is}, c(0.001, 4), is = .95)$root
-(x1 = one_d(target_d, mean = x_bar, sd =sd)$x1)
-(x2 = one_d(target_d, mean = x_bar, sd =sd)$x2)
-
-curve(dorder(x, mean = x_bar, sd =sd), -1,1, xlab = "Distribution of median of estimated normal distribution",
-      ylab = "Density")
-abline(h = target_d, col = 'orange', lwd = 3)
-text(-0.6, 4, sprintf("95%%CI is (%.3f, %.3f)", x1, x2))
-abline(v = median(sample), col = 'blue', lwd = 3)
+plot(density(norm_median),
+     main = "PDF of median of normal distribution with estimated parameters")
+abline(v = x1, col = 'orange', lwd = 3)
+abline(v = x2, col = 'orange', lwd = 3)
+text(-0.1, 6, sprintf("95%%CI is (%.3f, %.3f)", x1, x2))
 ```
 The x axis and y axis is the same as the above figure, the blue line shows the median of the sampling distribution. The orange line is the density that we can get 95% confidence interval of the sampling distribution of the median.
 
 From the steps above, we know that how to calculate the 95% CI of a single sample, now we can use the same logic to calculate a series of samples. We use simulation to generate 100 samples.
+
 ```{r}
-N = 100
+N = 500
 ssample = replicate(N, rnorm(201, mean = 0, sd = 1))
 
 para_xb = c()
@@ -194,33 +159,19 @@ for (i in seq(ncol(ssample))){
 }
 para_sum = data.frame(para_xb, para_sd)
 
-one_d = function(d, mean, sd){
-x_var = seq(-5, 5, by = 0.01)
-mode = x_var[which.max(dnorm(x_var, mean, sd))]
-x1 = uniroot(function(x,d) {dorder(x, mean, sd) - d}, c(-5, mode), d = d)$root
-x2 = uniroot(function(x,d) {dorder(x, mean, sd) - d}, c(mode, 5), d = d)$root
-is = porder(x2, mean, sd) - porder(x1, mean, sd)
-list(x1 = x1, x2 = x2, is =is)
-}
-
-many_d = function(ds,mean, sd){
-  out = NA*ds
-  for (i in seq_along(ds)){
-    out[i] = one_d(d = ds[i], mean, sd)$is
-  }
-  out
-}
-
-target_ds = c()
 x1_sum = c()
 x2_sum = c()
-for (i in seq(ncol(ssample))){
-  target_ds[i] = uniroot(function(d, is){many_d(d, mean = para_xb[i], sd = para_sd[i]) - is}, c(0.001, 3.9), is = .95)$root
-  x1_sum[i] = one_d(target_ds[i], mean = para_xb[i], sd = para_sd[i])$x1
-  x2_sum[i] = one_d(target_ds[i], mean = para_xb[i], sd = para_sd[i])$x2
+for (i in seq(N)){
+  norm_temp = replicate(
+  1500,
+  rnorm(401, mean = para_sum$para_xb[i], sd = para_sum$para_sd[i]) %>%
+  sort %>% '[' (200))
+  x1_sum[i] = quantile(norm_temp, c(0.025, 0.975))[1] %>% as.numeric
+  x2_sum[i] = quantile(norm_temp, c(0.025, 0.975))[2] %>% as.numeric
 }
 
-data.frame(x1_sum, x2_sum)
+
+data.frame(x1_sum, x2_sum) %>% head()
 ```
 Above is the two endpoints of 95% CI for different samples.
 
@@ -230,19 +181,24 @@ plot(x = x1_sum, y = seq(1,N, by = 1),xlab = 'parameter of interest',
 abline(v = 0, col = 'grey', lwd = 2)
 c = 0
 for (i in seq_along(x1_sum)){
-  col = ifelse(median(sample) < x2_sum[i] & median(sample) > x1_sum[i], 'blue', 'red')
+  col = ifelse(0 < x2_sum[i] & 0 > x1_sum[i], 'blue', 'red')
   lines(x = c(x1_sum[i], x2_sum[i]), y = c(i,i), col = col)
   if (col == 'blue'){
     c = c + 1
   }
 }
-text(-1.8, 80, sprintf("coverage probability is %.2f", c / N))
+text(-1.8, 80, sprintf("coverage probability is %.3f", c / N))
 legend("bottomright",
        c("captured", "not captured"),
        col = c("blue", "red"), 
        lwd = 3,
        bty = 'n')
+c / N
 ```
-We can visualize them, the blue color means that the 95% CI captured the population parameter, red one means it didn't. Idealy, a 95% confidence interval will capture the population parameter of interest in 95% of samples.
+We can visualize them, the blue color means that the 95% CI captured the population parameter, red one means it didn't. Idealy, a 95% confidence interval will capture the population parameter of interest in 95% of samples. In this case, we got 94% confidence intervals capture the median of population.
 
-It can be found that almost all confidence intervals capture the median of the population, which means that our confidence interval is relatively wide, which may indicate that the confidence interval is not too accurate for the estimation of the true value of the population. I think we can learn more about how the 95% CI will change by increasing the number of samples per sample.
+## Describe how you might change the simulation to learn more about the operating characteristics of your chosen method for constructing the 95% confidence interval
+It can be found that nearly 95% of confidence intervals capture the median of the population, which means that our confidence intervals are still unstable, which may indicate that the confidence interval is not too accurate for the estimation of the true value of the population. I think we can learn more about how the 95% CI will change by increasing the number of samples per sampling.
+
+# Conclusion
+A 95% confidence interval will capture the population parameter of interest in 95% of samples. However, in actual simulation, this result will not be so stable due to the influence of other factors, such as the number of samples and the variability of sample data.
