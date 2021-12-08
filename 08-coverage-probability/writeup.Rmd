@@ -97,9 +97,13 @@ Following by step1, we generate 201 random numbers (our sample) from a standard 
 ```{r}
 sample = rnorm(201, mean = 0, sd = 1)
 
-ll_norm = function(mean, sd){
-  sum(-log(dnorm(sample, mean, sd)))
+ll_norm <- function(mean, sd) {
+  fs <- dnorm(x = sample, mean, sd, log = TRUE)
+  -sum(fs)
 }
+# ll_norm = function(mean, sd){
+#   sum(-log(dnorm(sample, mean, sd)))
+# }
 
 ll_norm(0, 0.01)
 
@@ -150,9 +154,13 @@ para_xb = c()
 para_sd = c()
 
 for (i in seq(ncol(ssample))){
-  ll_norm = function(mean, sd){
-  sum(-log(dnorm(ssample[,i], mean, sd)))
-  }
+  ll_norm <- function(mean, sd) {
+  fs <- dnorm(x = ssample[,i], mean, sd, log = TRUE)
+  -sum(fs)
+}
+  # ll_norm = function(mean, sd){
+  # sum(-log(dnorm(ssample[,i], mean, sd)))
+  # }
   para = mle(minuslogl = ll_norm, start = list(mean = 1, sd = 1), lower = c(0,1), method = "L-BFGS-B")
   para_xb = append(para_xb,coef(para)[1])
   para_sd = append(para_sd,coef(para)[2])
