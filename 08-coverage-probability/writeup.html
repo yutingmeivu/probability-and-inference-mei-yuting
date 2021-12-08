@@ -11,7 +11,7 @@
 
 <meta name="author" content="Yuting Mei" />
 
-<meta name="date" content="2021-12-05" />
+<meta name="date" content="2021-12-08" />
 
 <title>08-coverage-probability</title>
 
@@ -255,7 +255,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">08-coverage-probability</h1>
 <h4 class="author">Yuting Mei</h4>
-<h4 class="date">December 05, 2021</h4>
+<h4 class="date">December 08, 2021</h4>
 
 </div>
 
@@ -304,20 +304,24 @@ div.tocify {
 <p>Following by step1, we generate 201 random numbers (our sample) from a standard normal distribution. Through MLE, we look for the parameters that can maximize the value of the joint probability density function of the random variable (here, it is 201 samples because extraction and observation have been carried out), and the calculated estimated mean value and estimated standard deviation are the parameters of the estimated distribution.</p>
 <pre class="r"><code>sample = rnorm(201, mean = 0, sd = 1)
 
-ll_norm = function(mean, sd){
-  sum(-log(dnorm(sample, mean, sd)))
+ll_norm &lt;- function(mean, sd) {
+  fs &lt;- dnorm(x = sample, mean, sd, log = TRUE)
+  -sum(fs)
 }
+# ll_norm = function(mean, sd){
+#   sum(-log(dnorm(sample, mean, sd)))
+# }
 
 ll_norm(0, 0.01)</code></pre>
-<pre><code>## [1] Inf</code></pre>
+<pre><code>## [1] 1235486</code></pre>
 <pre class="r"><code>para_normal = mle(minuslogl = ll_norm, start = list(mean = 1, sd = 1), lower = c(0,1), method = &quot;L-BFGS-B&quot;)
 
 (x_bar = coef(para_normal)[1])</code></pre>
-<pre><code>##      mean 
-## 0.0449946</code></pre>
+<pre><code>## mean 
+##    0</code></pre>
 <pre class="r"><code>(sd = coef(para_normal)[2])</code></pre>
-<pre><code>##     sd 
-## 1.0739</code></pre>
+<pre><code>##       sd 
+## 1.109089</code></pre>
 <p>I used the pdf of order statistics to approximate the sampling distribution of the median.</p>
 <pre class="r"><code>norm_median = replicate(
   1000,
@@ -351,9 +355,13 @@ para_xb = c()
 para_sd = c()
 
 for (i in seq(ncol(ssample))){
-  ll_norm = function(mean, sd){
-  sum(-log(dnorm(ssample[,i], mean, sd)))
-  }
+  ll_norm &lt;- function(mean, sd) {
+  fs &lt;- dnorm(x = ssample[,i], mean, sd, log = TRUE)
+  -sum(fs)
+}
+  # ll_norm = function(mean, sd){
+  # sum(-log(dnorm(ssample[,i], mean, sd)))
+  # }
   para = mle(minuslogl = ll_norm, start = list(mean = 1, sd = 1), lower = c(0,1), method = &quot;L-BFGS-B&quot;)
   para_xb = append(para_xb,coef(para)[1])
   para_sd = append(para_sd,coef(para)[2])
