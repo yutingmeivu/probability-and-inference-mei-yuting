@@ -391,6 +391,7 @@ data.frame(left, right, row.names = c("25 percentile", "50 percentile", "75 perc
 ```
 
 ```{r}
+# 25 percentile
 sample_25 = replicate(1000,
 rlnorm(101, 0, 1) %>% quantile(.25)
 )
@@ -600,7 +601,6 @@ prop.test(comp, total)
 **A.** Use the CLT shortcut to calculate the 95% confidence interval for the correlation of arm circumference and arm length using the NHANES dataset.  Is the sample correlation a reasonable measure of association for this data?
 
 ```{r}
-# ?
 # arml, armc
 da = d1 %>%
   select(arml, armc)
@@ -616,6 +616,8 @@ quantile(out, c(0.05/2, 1-0.05/2))
 
 ```{r}
 # flat, not centralized in a line
+# linear relationship cannot perfectly describe their relation
+# so sample correlation may not be a reasonable measure of association of data
 plot(da$arml, da$armc)
 ```
 
