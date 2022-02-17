@@ -23,19 +23,3 @@ Changzhou, Jiangsu, China
 What's your favorite movie?
 Interstellar
 
----
-
-Name: Hongyu Dai
-
-What was your journey to data science?
-I like both math and computer science, so I think Data science is the best way for me to combine them.
-
-What's your hobby?
-Watching movies
-
-Where is your hometown?
-Fuzhou, Fujian, China
-
-What's your favorite movie?
-like sunny, like raining
-
