@@ -1,5 +1,5 @@
 # probability-and-inference-portfolio-mei-yuting
-a GitHub repo for 5620 Probability and Statistical Inference
+a GitHub repo for 5620 Probability and Statistical Inference ( just a mirror from another repo which is not my account )
 
 ## Link
 00-student-profile:https://github.com/vanderbilt-data-science/probability-and-inference-portfolio-mei-yuting/tree/main/00-student-profile
